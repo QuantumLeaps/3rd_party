@@ -4,6 +4,12 @@ some examples in the QP/C and QP/C++ Real-Time Embedded Frameworks.
 The code in this repository is provided only to demonstrate the use
 of the QP frameworks.
 
+> **NOTE**
+This repository is **NOT** designed to be used standalone, but rather
+only as submodule of the repositories:
+- [qpc](https://github.com/QuantumLeaps/qpc)
+- [qpcpp](https://github.com/QuantumLeaps/qpcpp)
+
 
 # Licensing Information
 Quantum Leaps, LLC expressly makes NO claims of ownership to any of the
