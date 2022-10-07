@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Product: QUTEST port for NUCLEO-L053R8 board
-* Last updated for version 7.1.0
-* Last updated on  2022-08-21
+* Last updated for version 7.1.2
+* Last updated on  2022-10-06
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -71,9 +71,9 @@ void USART2_IRQHandler(void);
 * the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
 * QK_ISR_EXIT and they cannot post or publish events.
 */
-void USART2_IRQHandler(void) { /* used in QS-RX (kernel UNAWARE interrutp) */
+void USART2_IRQHandler(void) { /* used in QS-RX (kernel UNAWARE interrupt) */
     /* is RX register NOT empty? */
-    if ((USART2->ISR & (1U << 5)) != 0) {
+    while ((USART2->ISR & (1U << 5)) != 0) {
         uint32_t b = USART2->RDR;
         QS_RX_PUT(b);
     }
@@ -81,8 +81,8 @@ void USART2_IRQHandler(void) { /* used in QS-RX (kernel UNAWARE interrutp) */
 
 /* QS callbacks ============================================================*/
 uint8_t QS_onStartup(void const *arg) {
-    static uint8_t qsBuf[2*1024]; /* buffer for Quantum Spy */
-    static uint8_t qsRxBuf[128];  /* buffer for QS-RX channel */
+    static uint8_t qsBuf[2*1024]; /* buffer for QS-TX channel */
+    static uint8_t qsRxBuf[256];  /* buffer for QS-RX channel */
 
     (void)arg; /* avoid the "unused parameter" compiler warning */
 

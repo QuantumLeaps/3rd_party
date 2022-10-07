@@ -2,14 +2,14 @@
 //! @brief QUTEST port for NUCLEO-L053R8 board
 //! @cond
 //============================================================================
-//! Last updated for: @qpcpp_7_0_0
-//! Last updated on  2021-12-01
+//! Last updated for: @qpcpp_7_1_2
+//! Last updated on  2022-10-06
 //!
 //!                    Q u a n t u m  L e a P s
 //!                    ------------------------
 //!                    Modern Embedded Software
 //!
-//! Copyright (C) 2005-2021 Quantum Leaps. All rights reserved.
+//! Copyright (C) 2005 Quantum Leaps. All rights reserved.
 //!
 //! This program is open source software: you can redistribute it and/or
 //! modify it under the terms of the GNU General Public License as published
@@ -78,9 +78,9 @@ extern "C" {
 // the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
 // QK_ISR_EXIT and they cannot post or publish events.
 //
-void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrutp)
+void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrupt)
     // is RX register NOT empty?
-    if ((USART2->ISR & (1U << 5)) != 0) {
+    while ((USART2->ISR & (1U << 5)) != 0) {
         std::uint32_t b = USART2->RDR;
         QP::QS::rxPut(b);
     }
@@ -91,8 +91,8 @@ void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrutp)
 bool QS::onStartup(void const *arg) {
     (void)arg; // unused parameter
 
-    static std::uint8_t qsTxBuf[2*1024]; // buffer for Quantum Spy
-    static std::uint8_t qsRxBuf[128];    // buffer for QS-RX channel
+    static std::uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    static std::uint8_t qsRxBuf[256];    // buffer for QS-RX channel
 
     initBuf  (qsTxBuf, sizeof(qsTxBuf));
     rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
