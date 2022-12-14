@@ -85,7 +85,7 @@ __heap_limit
 ; Place code into the reset code section.
 ;
 ;******************************************************************************
-        AREA   RESET, DATA, READONLY
+        AREA   RESET, DATA, READONLY, ALIGN=8
         EXPORT  __Vectors
         EXPORT  __Vectors_End
         EXPORT  __Vectors_Size
@@ -100,18 +100,18 @@ __Vectors
         DCD     Reset_Handler               ; Reset Handler
         DCD     NMI_Handler                 ; NMI Handler
         DCD     HardFault_Handler           ; Hard Fault Handler
-        DCD     MemManage_Handler           ; The MPU fault handler
-        DCD     BusFault_Handler            ; The bus fault handler
-        DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     MemManage_Handler           ; MPU fault handler
+        DCD     BusFault_Handler            ; Bus fault handler
+        DCD     UsageFault_Handler          ; Usage fault handler
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
-        DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
-        DCD     PendSV_Handler              ; The PendSV handler
-        DCD     SysTick_Handler             ; The SysTick handler
+        DCD     DebugMon_Handler            ; Debug Monitor handler
+        DCD     Default_Handler             ; Reserved
+        DCD     PendSV_Handler              ; PendSV handler
+        DCD     SysTick_Handler             ; SysTick handler
 
         ; IRQ handlers...
         DCD     EMU_IRQHandler              ; 0 - EMU
@@ -148,10 +148,16 @@ __Vectors
         DCD     CRYOTIMER_IRQHandler        ; 31 - CRYOTIMER
         DCD     Default_Handler             ; 32 - Reserved
         DCD     FPUEH_IRQHandler            ; 33 - FPUEH
+
+        ; Extend the end of the Vector Table to the 2^8 boundary to ensure
+        ; that no other data or code will be placed up to address 0x100.
+        ; This might be necessary for NULL-pointer protection by the MPU,
+        ; where a protected region of 2^8 bytes spans over the Vector Table.
+        ALIGN  8
+
 __Vectors_End
 
 __Vectors_Size  EQU     __Vectors_End - __Vectors
-
 
 
 ;******************************************************************************
@@ -361,7 +367,6 @@ FPUEH_IRQHandler
 
 
 ;******************************************************************************
-;
 ; The function expected of the C library startup code for defining the stack
 ; and heap memory locations.  For the C library version of the startup code,
 ; provide this function so that the C library initialization code can find out
@@ -384,10 +389,13 @@ __user_initial_stackheap PROC
         LDR     R3, =__stack_base
         BX      LR
         ENDP
+
+        ALIGN
+
     ENDIF
 
+
 ;******************************************************************************
-;
 ; The function assert_failed defines the error/assertion handling policy
 ; for the application. After making sure that the stack is OK, this function
 ; calls Q_onAssert, which should NOT return (typically reset the CPU).
@@ -402,13 +410,15 @@ __user_initial_stackheap PROC
         IMPORT  Q_onAssert
 assert_failed PROC
 
-        LDR    sp,=__initial_sp  ; re-set the SP in case of stack overflow
-        BL     Q_onAssert        ; call the application-specific handler
+        LDR     r2,=__initial_sp  ; load the original top of stack
+        MOV     sp,r2             ; re-set the SP in case of stack overflow
+        BL      Q_onAssert
 
-        B      .                 ; should not be reached, but just in case...
+        B       .                ; should never be reached
 
         ENDP
 
         ALIGN                    ; make sure the end of this section is aligned
 
         END                      ; end of module
+

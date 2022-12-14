@@ -80,28 +80,28 @@ __heap_limit
 
 
 ; Vector Table Mapped to Address 0 at Reset
-                AREA    RESET, DATA, READONLY
+                AREA    RESET, DATA, READONLY, ALIGN=8
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
 __Vectors
-        DCD     __initial_sp              ; Top of Stack
-        DCD     Reset_Handler             ; Reset Handler
-        DCD     NMI_Handler               ; NMI Handler
-        DCD     HardFault_Handler         ; Hard Fault Handler
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     SVC_Handler               ; SVCall Handler
-        DCD     DebugMon_Handler          ; Debug Monitor Handler
-        DCD     0                         ; Reserved
-        DCD     PendSV_Handler            ; PendSV Handler
-        DCD     SysTick_Handler           ; SysTick Handler
+        DCD     __initial_sp                ; Top of Stack
+        DCD     Reset_Handler               ; Reset Handler
+        DCD     NMI_Handler                 ; NMI Handler
+        DCD     HardFault_Handler           ; Hard Fault Handler
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     SVC_Handler                 ; SVCall handler
+        DCD     DebugMon_Handler            ; Debug Monitor handler
+        DCD     Default_Handler             ; Reserved
+        DCD     PendSV_Handler              ; PendSV handler
+        DCD     SysTick_Handler             ; SysTick handler
 
         ; IRQ handlers...
         DCD     WWDG_IRQHandler                ; Window Watchdog
@@ -118,14 +118,14 @@ __Vectors
         DCD     DMA1_Channel4_5_6_7_IRQHandler ; DMA1 Channel 4, 5, 6 and 7
         DCD     ADC1_COMP_IRQHandler           ; ADC1, COMP1 and COMP2
         DCD     LPTIM1_IRQHandler              ; LPTIM1
-        DCD     0                              ; Reserved
+        DCD     Default_Handler                ; Reserved
         DCD     TIM2_IRQHandler                ; TIM2
-        DCD     0                              ; Reserved
+        DCD     Default_Handler                ; Reserved
         DCD     TIM6_DAC_IRQHandler            ; TIM6 and DAC
-        DCD     0                              ; Reserved
-        DCD     0                              ; Reserved
+        DCD     Default_Handler                ; Reserved
+        DCD     Default_Handler                ; Reserved
         DCD     TIM21_IRQHandler               ; TIM21
-        DCD     0                              ; Reserved
+        DCD     Default_Handler                ; Reserved
         DCD     TIM22_IRQHandler               ; TIM22
         DCD     I2C1_IRQHandler                ; I2C1
         DCD     I2C2_IRQHandler                ; I2C2
@@ -137,9 +137,15 @@ __Vectors
         DCD     LCD_IRQHandler                 ; LCD
         DCD     USB_IRQHandler                 ; USB
 
+        ; Extend the end of the Vector Table to the 2^8 boundary to ensure
+        ; that no other data or code will be placed up to address 0x100.
+        ; This might be necessary for NULL-pointer protection by the MPU,
+        ; where a protected region of 2^8 bytes spans over the Vector Table.
+        ALIGN  8
+
 __Vectors_End
 
-__Vectors_Size  EQU  __Vectors_End - __Vectors
+__Vectors_Size  EQU     __Vectors_End - __Vectors
 
 
 ;******************************************************************************
@@ -278,32 +284,31 @@ USB_IRQHandler
 ;*******************************************************************************
 ; User Stack and Heap initialization
 ;*******************************************************************************
-        IF      :DEF:__MICROLIB
+    IF :DEF:__MICROLIB
 
         EXPORT  __initial_sp
         EXPORT  __heap_base
         EXPORT  __heap_limit
 
-        ELSE
+    ELSE
 
         IMPORT  __use_two_region_memory
         EXPORT  __user_initial_stackheap
 
 __user_initial_stackheap
 
-        LDR     R0, =  Heap_Mem
+        LDR     R0, =Heap_Mem
         LDR     R1, =(Stack_Mem + Stack_Size)
-        LDR     R2, = (Heap_Mem +  Heap_Size)
-        LDR     R3, = Stack_Mem
+        LDR     R2, =(Heap_Mem +  Heap_Size)
+        LDR     R3, =Stack_Mem
         BX      LR
 
         ALIGN
 
-        ENDIF
+    ENDIF
 
 
 ;******************************************************************************
-;
 ; The function assert_failed defines the error/assertion handling policy
 ; for the application. After making sure that the stack is OK, this function
 ; calls Q_onAssert, which should NOT return (typically reset the CPU).
@@ -317,15 +322,13 @@ __user_initial_stackheap
         EXPORT  assert_failed
         IMPORT  Q_onAssert
 assert_failed PROC
-
-        LDR    R2,=__initial_sp  ; load the original top of stack
-        MOV    SP,R2             ; re-set the SP in case of stack overflow
+        LDR     r2,=__initial_sp ; load the original top of stack
+        MOV     sp,r2            ; re-set the SP in case of stack overflow
         BL     Q_onAssert        ; call the application-specific handler
 
-        B      .                 ; should not be reached, but just in case...
+        B       .                ; should never be reached
 
         ENDP
-
 
         ALIGN                    ; make sure the end of this section is aligned
 

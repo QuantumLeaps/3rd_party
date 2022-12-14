@@ -1,7 +1,7 @@
-/*****************************************************************************
+/*============================================================================
 * Product: QUTEST port for the EFM32-SLSTK3401A board
-* Last updated for version 7.1.0
-* Last updated on  2022-08-21
+* Last updated for version 7.2.0
+* Last updated on  2022-12-14
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -30,21 +30,21 @@
 * Contact information:
 * <www.state-machine.com/licensing>
 * <info@state-machine.com>
-*****************************************************************************/
+============================================================================*/
 #ifndef Q_SPY
     #error "Q_SPY must be defined to compile qutest_port.c"
 #endif /* Q_SPY */
 
-#define QP_IMPL       /* this is QP implementation */
-#include "qf_port.h"  /* QF port */
-#include "qassert.h"  /* QP embedded systems-friendly assertions */
-#include "qs_port.h"  /* QS port */
-#include "qs_pkg.h"   /* QS package-scope interface */
+#define QP_IMPL        /* this is QP implementation */
+#include "qf_port.h"   /* QF port */
+#include "qassert.h"   /* QP embedded systems-friendly assertions */
+#include "qs_port.h"   /* QS port */
+#include "qs_pkg.h"    /* QS package-scope interface */
 
-#include "em_device.h"  /* the device specific header (SiLabs) */
-#include "em_cmu.h"     /* Clock Management Unit (SiLabs) */
-#include "em_gpio.h"    /* GPIO (SiLabs) */
-#include "em_usart.h"   /* USART (SiLabs) */
+#include "em_device.h" /* the device specific header (SiLabs) */
+#include "em_cmu.h"    /* Clock Management Unit (SiLabs) */
+#include "em_gpio.h"   /* GPIO (SiLabs) */
+#include "em_usart.h"  /* USART (SiLabs) */
 /* add other drivers if necessary... */
 
 //Q_DEFINE_THIS_MODULE("qutest_port")
@@ -80,25 +80,10 @@ void USART0_RX_IRQHandler(void) {
 
 /* QS callbacks ============================================================*/
 uint8_t QS_onStartup(void const *arg) {
-    static uint8_t qsTxBuf[2*1024]; /* buffer for QS transmit channel */
-    static uint8_t qsRxBuf[100];    /* buffer for QS receive channel */
-    static USART_InitAsync_TypeDef init = {
-        usartEnable,      /* Enable RX/TX when init completed */
-        0,                /* Use current clock for configuring baudrate */
-        115200,           /* 115200 bits/s */
-        usartOVS16,       /* 16x oversampling */
-        usartDatabits8,   /* 8 databits */
-        usartNoParity,    /* No parity */
-        usartStopbits1,   /* 1 stopbit */
-        0,                /* Do not disable majority vote */
-        0,                /* Not USART PRS input mode */
-        usartPrsRxCh0,    /* PRS channel 0 */
-        0,                /* Auto CS functionality enable/disable switch */
-        0,                /* Auto CS Hold cycles */
-        0                 /* Auto CS Setup cycles */
-    };
+    Q_UNUSED_PAR(arg);
 
-    (void)arg; /* unused parameter */
+    static uint8_t qsTxBuf[2*1024]; /* buffer for QS-TX channel */
+    static uint8_t qsRxBuf[256];    /* buffer for QS-RX channel */
 
     QS_initBuf  (qsTxBuf, sizeof(qsTxBuf));
     QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -116,6 +101,21 @@ uint8_t QS_onStartup(void const *arg) {
     CMU_ClockEnable(cmuClock_USART0, true);
 
     /* configure the UART for the desired baud rate, 8-N-1 operation */
+    static USART_InitAsync_TypeDef init = {
+        usartEnable,      /* Enable RX/TX when init completed */
+        0,                /* Use current clock for configuring baudrate */
+        115200,           /* 115200 bits/s */
+        usartOVS16,       /* 16x oversampling */
+        usartDatabits8,   /* 8 databits */
+        usartNoParity,    /* No parity */
+        usartStopbits1,   /* 1 stopbit */
+        0,                /* Do not disable majority vote */
+        0,                /* Not USART PRS input mode */
+        usartPrsRxCh0,    /* PRS channel 0 */
+        0,                /* Auto CS functionality enable/disable switch */
+        0,                /* Auto CS Hold cycles */
+        0                 /* Auto CS Setup cycles */
+    };
     init.enable = usartDisable;
     USART_InitAsync(l_USART0, &init);
 
@@ -142,25 +142,29 @@ uint8_t QS_onStartup(void const *arg) {
     /* enable the UART RX interrupt... */
     NVIC_EnableIRQ(USART0_RX_IRQn); /* UART0 interrupt used for QS-RX */
 
-    return 1U; /* return success */
+    return 1U; /* success */
 }
 /*..........................................................................*/
 void QS_onCleanup(void) {
 }
 /*..........................................................................*/
 void QS_onFlush(void) {
-    uint16_t b;
-
-    QF_INT_DISABLE();
-    while ((b = QS_getByte()) != QS_EOD) { /* while not End-Of-Data... */
-        QF_INT_ENABLE();
-        /* while TXE not empty */
-        while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
-        }
-        l_USART0->TXDATA  = (b & 0xFFU);  /* put into the DR register */
+    for (;;) {
         QF_INT_DISABLE();
+        uint16_t b = QS_getByte();
+        QF_INT_ENABLE();
+
+        if (b != QS_EOD) {
+            while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
+            }
+            l_USART0->TXDATA  = (b & 0xFFU);  /* put into the DR register */
+        }
+        else {
+            break;
+        }
     }
-    QF_INT_ENABLE();
+    while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
+    }
 }
 /*..........................................................................*/
 /*! callback function to reset the target (to be implemented in the BSP) */
@@ -170,10 +174,8 @@ void QS_onReset(void) {
 /*..........................................................................*/
 void QS_doOutput(void) {
     if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) {  /* is TXE empty? */
-        uint16_t b;
-
         QF_INT_DISABLE();
-        b = QS_getByte();
+        uint16_t b = QS_getByte();
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  /* not End-Of-Data? */
@@ -188,7 +190,7 @@ void QS_onTestLoop() {
 
         QS_rxParse();  /* parse all the received bytes */
 
-       if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) { /* is TXE empty? */
+        if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) { /* is TXE empty? */
             uint16_t b = QS_getByte();
             if (b != QS_EOD) {  /* not End-Of-Data? */
                 l_USART0->TXDATA = (b & 0xFFU); /* put into the DR register */

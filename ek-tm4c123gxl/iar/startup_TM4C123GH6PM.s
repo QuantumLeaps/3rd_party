@@ -67,13 +67,13 @@ __vector_table
         DCD     MemManage_Handler           ; The MPU fault handler
         DCD     BusFault_Handler            ; The bus fault handler
         DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
         DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     PendSV_Handler              ; The PendSV handler
         DCD     SysTick_Handler             ; The SysTick handler
 
@@ -120,7 +120,7 @@ __vector_table
         DCD     CAN0_IRQHandler             ; CAN0
         DCD     CAN1_IRQHandler             ; CAN1
         DCD     CAN2_IRQHandler             ; CAN2
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     Hibernate_IRQHandler        ; Hibernate
         DCD     USB0_IRQHandler             ; USB0
         DCD     PWMGen3_IRQHandler          ; PWM Generator 3
@@ -130,8 +130,8 @@ __vector_table
         DCD     ADC1Seq1_IRQHandler         ; ADC1 Sequence 1
         DCD     ADC1Seq2_IRQHandler         ; ADC1 Sequence 2
         DCD     ADC1Seq3_IRQHandler         ; ADC1 Sequence 3
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     GPIOPortJ_IRQHandler        ; GPIO Port J
         DCD     GPIOPortK_IRQHandler        ; GPIO Port K
         DCD     GPIOPortL_IRQHandler        ; GPIO Port L
@@ -142,34 +142,34 @@ __vector_table
         DCD     UART5_IRQHandler            ; UART5 Rx and Tx
         DCD     UART6_IRQHandler            ; UART6 Rx and Tx
         DCD     UART7_IRQHandler            ; UART7 Rx and Tx
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     I2C2_IRQHandler             ; I2C2 Master and Slave
         DCD     I2C3_IRQHandler             ; I2C3 Master and Slave
         DCD     Timer4A_IRQHandler          ; Timer 4 subtimer A
         DCD     Timer4B_IRQHandler          ; Timer 4 subtimer B
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     Timer5A_IRQHandler          ; Timer 5 subtimer A
         DCD     Timer5B_IRQHandler          ; Timer 5 subtimer B
         DCD     WideTimer0A_IRQHandler      ; Wide Timer 0 subtimer A
@@ -185,15 +185,15 @@ __vector_table
         DCD     WideTimer5A_IRQHandler      ; Wide Timer 5 subtimer A
         DCD     WideTimer5B_IRQHandler      ; Wide Timer 5 subtimer B
         DCD     FPU_IRQHandler              ; FPU
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     I2C4_IRQHandler             ; I2C4 Master and Slave
         DCD     I2C5_IRQHandler             ; I2C5 Master and Slave
         DCD     GPIOPortM_IRQHandler        ; GPIO Port M
         DCD     GPIOPortN_IRQHandler        ; GPIO Port N
         DCD     QEI2_IRQHandler             ; Quadrature Encoder 2
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     GPIOPortP0_IRQHandler       ; GPIO Port P (Summary or P0)
         DCD     GPIOPortP1_IRQHandler       ; GPIO Port P1
         DCD     GPIOPortP2_IRQHandler       ; GPIO Port P2
@@ -217,7 +217,6 @@ __vector_table
         DCD     PWM1Gen2_IRQHandler         ; PWM 1 Generator 2
         DCD     PWM1Gen3_IRQHandler         ; PWM 1 Generator 3
         DCD     PWM1Fault_IRQHandler        ; PWM 1 Fault
-
 __Vectors_End
 
 __Vectors       EQU   __vector_table
@@ -235,6 +234,17 @@ __Vectors_Size  EQU   __Vectors_End - __Vectors
         EXTERN  __iar_program_start
 Reset_Handler
         BL      SystemInit  ; CMSIS system initialization
+
+        ; pre-fill the CSTACK with 0xDEADBEEF...................
+        LDR     r0,=0xDEADBEEF
+        MOV     r1,r0
+        LDR     r2,=sfb(CSTACK)
+        LDR     r3,=sfe(CSTACK)
+Reset_stackInit_fill:
+        STMIA   r2!,{r0,r1}
+        CMP     r2,r3
+        BLT.N   Reset_stackInit_fill
+
         BL      __iar_program_start ; IAR startup code
 ;.............................................................................
         PUBWEAK NMI_Handler
@@ -282,6 +292,7 @@ str_UsageFault
         DCB     "UsageFault"
         ALIGNROM 2
 
+
 ;******************************************************************************
 ;
 ; Weak non-fault handlers...
@@ -328,6 +339,7 @@ str_SysTick
 ; Weak IRQ handlers...
 ;
 
+        PUBWEAK  Default_Handler
         PUBWEAK  GPIOPortA_IRQHandler
         PUBWEAK  GPIOPortB_IRQHandler
         PUBWEAK  GPIOPortC_IRQHandler
@@ -437,6 +449,7 @@ str_SysTick
         PUBWEAK  PWM1Gen3_IRQHandler
         PUBWEAK  PWM1Fault_IRQHandler
 
+Default_Handler
 GPIOPortA_IRQHandler
 GPIOPortB_IRQHandler
 GPIOPortC_IRQHandler
@@ -571,7 +584,6 @@ assert_failed
         BL     Q_onAssert        ; call the application-specific handler
 
         B      .                 ; should not be reached, but just in case...
-
 
         END                      ; end of module
 

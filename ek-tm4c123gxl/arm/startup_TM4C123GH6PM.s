@@ -85,7 +85,7 @@ __heap_limit
 ; Place code into the reset code section.
 ;
 ;******************************************************************************
-        AREA   RESET, DATA, READONLY
+        AREA   RESET, DATA, READONLY, ALIGN=10
         EXPORT  __Vectors
         EXPORT  __Vectors_End
         EXPORT  __Vectors_Size
@@ -103,156 +103,162 @@ __Vectors
         DCD     MemManage_Handler           ; The MPU fault handler
         DCD     BusFault_Handler            ; The bus fault handler
         DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
         DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     PendSV_Handler              ; The PendSV handler
         DCD     SysTick_Handler             ; The SysTick handler
 
         ; IRQ handlers...
-        DCD     GPIOPortA_IRQHandler       ; GPIO Port A
-        DCD     GPIOPortB_IRQHandler       ; GPIO Port B
-        DCD     GPIOPortC_IRQHandler       ; GPIO Port C
-        DCD     GPIOPortD_IRQHandler       ; GPIO Port D
-        DCD     GPIOPortE_IRQHandler       ; GPIO Port E
-        DCD     UART0_IRQHandler           ; UART0 Rx and Tx
-        DCD     UART1_IRQHandler           ; UART1 Rx and Tx
-        DCD     SSI0_IRQHandler            ; SSI0 Rx and Tx
-        DCD     I2C0_IRQHandler            ; I2C0 Master and Slave
-        DCD     PWMFault_IRQHandler        ; PWM Fault
-        DCD     PWMGen0_IRQHandler         ; PWM Generator 0
-        DCD     PWMGen1_IRQHandler         ; PWM Generator 1
-        DCD     PWMGen2_IRQHandler         ; PWM Generator 2
-        DCD     QEI0_IRQHandler            ; Quadrature Encoder 0
-        DCD     ADCSeq0_IRQHandler         ; ADC Sequence 0
-        DCD     ADCSeq1_IRQHandler         ; ADC Sequence 1
-        DCD     ADCSeq2_IRQHandler         ; ADC Sequence 2
-        DCD     ADCSeq3_IRQHandler         ; ADC Sequence 3
-        DCD     Watchdog_IRQHandler        ; Watchdog timer
-        DCD     Timer0A_IRQHandler         ; Timer 0 subtimer A
-        DCD     Timer0B_IRQHandler         ; Timer 0 subtimer B
-        DCD     Timer1A_IRQHandler         ; Timer 1 subtimer A
-        DCD     Timer1B_IRQHandler         ; Timer 1 subtimer B
-        DCD     Timer2A_IRQHandler         ; Timer 2 subtimer A
-        DCD     Timer2B_IRQHandler         ; Timer 2 subtimer B
-        DCD     Comp0_IRQHandler           ; Analog Comparator 0
-        DCD     Comp1_IRQHandler           ; Analog Comparator 1
-        DCD     Comp2_IRQHandler           ; Analog Comparator 2
-        DCD     SysCtrl_IRQHandler         ; System Control (PLL, OSC, BO)
-        DCD     FlashCtrl_IRQHandler       ; FLASH Control
-        DCD     GPIOPortF_IRQHandler       ; GPIO Port F
-        DCD     GPIOPortG_IRQHandler       ; GPIO Port G
-        DCD     GPIOPortH_IRQHandler       ; GPIO Port H
-        DCD     UART2_IRQHandler           ; UART2 Rx and Tx
-        DCD     SSI1_IRQHandler            ; SSI1 Rx and Tx
-        DCD     Timer3A_IRQHandler         ; Timer 3 subtimer A
-        DCD     Timer3B_IRQHandler         ; Timer 3 subtimer B
-        DCD     I2C1_IRQHandler            ; I2C1 Master and Slave
-        DCD     QEI1_IRQHandler            ; Quadrature Encoder 1
-        DCD     CAN0_IRQHandler            ; CAN0
-        DCD     CAN1_IRQHandler            ; CAN1
-        DCD     CAN2_IRQHandler            ; CAN2
-        DCD     0                          ; Reserved
-        DCD     Hibernate_IRQHandler       ; Hibernate
-        DCD     USB0_IRQHandler            ; USB0
-        DCD     PWMGen3_IRQHandler         ; PWM Generator 3
-        DCD     uDMAST_IRQHandler          ; uDMA Software Transfer
-        DCD     uDMAError_IRQHandler       ; uDMA Error
-        DCD     ADC1Seq0_IRQHandler        ; ADC1 Sequence 0
-        DCD     ADC1Seq1_IRQHandler        ; ADC1 Sequence 1
-        DCD     ADC1Seq2_IRQHandler        ; ADC1 Sequence 2
-        DCD     ADC1Seq3_IRQHandler        ; ADC1 Sequence 3
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     GPIOPortJ_IRQHandler       ; GPIO Port J
-        DCD     GPIOPortK_IRQHandler       ; GPIO Port K
-        DCD     GPIOPortL_IRQHandler       ; GPIO Port L
-        DCD     SSI2_IRQHandler            ; SSI2 Rx and Tx
-        DCD     SSI3_IRQHandler            ; SSI3 Rx and Tx
-        DCD     UART3_IRQHandler           ; UART3 Rx and Tx
-        DCD     UART4_IRQHandler           ; UART4 Rx and Tx
-        DCD     UART5_IRQHandler           ; UART5 Rx and Tx
-        DCD     UART6_IRQHandler           ; UART6 Rx and Tx
-        DCD     UART7_IRQHandler           ; UART7 Rx and Tx
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     I2C2_IRQHandler            ; I2C2 Master and Slave
-        DCD     I2C3_IRQHandler            ; I2C3 Master and Slave
-        DCD     Timer4A_IRQHandler         ; Timer 4 subtimer A
-        DCD     Timer4B_IRQHandler         ; Timer 4 subtimer B
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     Timer5A_IRQHandler         ; Timer 5 subtimer A
-        DCD     Timer5B_IRQHandler         ; Timer 5 subtimer B
-        DCD     WideTimer0A_IRQHandler     ; Wide Timer 0 subtimer A
-        DCD     WideTimer0B_IRQHandler     ; Wide Timer 0 subtimer B
-        DCD     WideTimer1A_IRQHandler     ; Wide Timer 1 subtimer A
-        DCD     WideTimer1B_IRQHandler     ; Wide Timer 1 subtimer B
-        DCD     WideTimer2A_IRQHandler     ; Wide Timer 2 subtimer A
-        DCD     WideTimer2B_IRQHandler     ; Wide Timer 2 subtimer B
-        DCD     WideTimer3A_IRQHandler     ; Wide Timer 3 subtimer A
-        DCD     WideTimer3B_IRQHandler     ; Wide Timer 3 subtimer B
-        DCD     WideTimer4A_IRQHandler     ; Wide Timer 4 subtimer A
-        DCD     WideTimer4B_IRQHandler     ; Wide Timer 4 subtimer B
-        DCD     WideTimer5A_IRQHandler     ; Wide Timer 5 subtimer A
-        DCD     WideTimer5B_IRQHandler     ; Wide Timer 5 subtimer B
-        DCD     FPU_IRQHandler             ; FPU
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     I2C4_IRQHandler            ; I2C4 Master and Slave
-        DCD     I2C5_IRQHandler            ; I2C5 Master and Slave
-        DCD     GPIOPortM_IRQHandler       ; GPIO Port M
-        DCD     GPIOPortN_IRQHandler       ; GPIO Port N
-        DCD     QEI2_IRQHandler            ; Quadrature Encoder 2
-        DCD     0                          ; Reserved
-        DCD     0                          ; Reserved
-        DCD     GPIOPortP0_IRQHandler      ; GPIO Port P (Summary or P0)
-        DCD     GPIOPortP1_IRQHandler      ; GPIO Port P1
-        DCD     GPIOPortP2_IRQHandler      ; GPIO Port P2
-        DCD     GPIOPortP3_IRQHandler      ; GPIO Port P3
-        DCD     GPIOPortP4_IRQHandler      ; GPIO Port P4
-        DCD     GPIOPortP5_IRQHandler      ; GPIO Port P5
-        DCD     GPIOPortP6_IRQHandler      ; GPIO Port P6
-        DCD     GPIOPortP7_IRQHandler      ; GPIO Port P7
-        DCD     GPIOPortQ0_IRQHandler      ; GPIO Port Q (Summary or Q0)
-        DCD     GPIOPortQ1_IRQHandler      ; GPIO Port Q1
-        DCD     GPIOPortQ2_IRQHandler      ; GPIO Port Q2
-        DCD     GPIOPortQ3_IRQHandler      ; GPIO Port Q3
-        DCD     GPIOPortQ4_IRQHandler      ; GPIO Port Q4
-        DCD     GPIOPortQ5_IRQHandler      ; GPIO Port Q5
-        DCD     GPIOPortQ6_IRQHandler      ; GPIO Port Q6
-        DCD     GPIOPortQ7_IRQHandler      ; GPIO Port Q7
-        DCD     GPIOPortR_IRQHandler       ; GPIO Port R
-        DCD     GPIOPortS_IRQHandler       ; GPIO Port S
-        DCD     PWM1Gen0_IRQHandler        ; PWM 1 Generator 0
-        DCD     PWM1Gen1_IRQHandler        ; PWM 1 Generator 1
-        DCD     PWM1Gen2_IRQHandler        ; PWM 1 Generator 2
-        DCD     PWM1Gen3_IRQHandler        ; PWM 1 Generator 3
-        DCD     PWM1Fault_IRQHandler       ; PWM 1 Fault
+        DCD     GPIOPortA_IRQHandler        ; GPIO Port A
+        DCD     GPIOPortB_IRQHandler        ; GPIO Port B
+        DCD     GPIOPortC_IRQHandler        ; GPIO Port C
+        DCD     GPIOPortD_IRQHandler        ; GPIO Port D
+        DCD     GPIOPortE_IRQHandler        ; GPIO Port E
+        DCD     UART0_IRQHandler            ; UART0 Rx and Tx
+        DCD     UART1_IRQHandler            ; UART1 Rx and Tx
+        DCD     SSI0_IRQHandler             ; SSI0 Rx and Tx
+        DCD     I2C0_IRQHandler             ; I2C0 Master and Slave
+        DCD     PWMFault_IRQHandler         ; PWM Fault
+        DCD     PWMGen0_IRQHandler          ; PWM Generator 0
+        DCD     PWMGen1_IRQHandler          ; PWM Generator 1
+        DCD     PWMGen2_IRQHandler          ; PWM Generator 2
+        DCD     QEI0_IRQHandler             ; Quadrature Encoder 0
+        DCD     ADCSeq0_IRQHandler          ; ADC Sequence 0
+        DCD     ADCSeq1_IRQHandler          ; ADC Sequence 1
+        DCD     ADCSeq2_IRQHandler          ; ADC Sequence 2
+        DCD     ADCSeq3_IRQHandler          ; ADC Sequence 3
+        DCD     Watchdog_IRQHandler         ; Watchdog timer
+        DCD     Timer0A_IRQHandler          ; Timer 0 subtimer A
+        DCD     Timer0B_IRQHandler          ; Timer 0 subtimer B
+        DCD     Timer1A_IRQHandler          ; Timer 1 subtimer A
+        DCD     Timer1B_IRQHandler          ; Timer 1 subtimer B
+        DCD     Timer2A_IRQHandler          ; Timer 2 subtimer A
+        DCD     Timer2B_IRQHandler          ; Timer 2 subtimer B
+        DCD     Comp0_IRQHandler            ; Analog Comparator 0
+        DCD     Comp1_IRQHandler            ; Analog Comparator 1
+        DCD     Comp2_IRQHandler            ; Analog Comparator 2
+        DCD     SysCtrl_IRQHandler          ; System Control (PLL, OSC, BO)
+        DCD     FlashCtrl_IRQHandler        ; FLASH Control
+        DCD     GPIOPortF_IRQHandler        ; GPIO Port F
+        DCD     GPIOPortG_IRQHandler        ; GPIO Port G
+        DCD     GPIOPortH_IRQHandler        ; GPIO Port H
+        DCD     UART2_IRQHandler            ; UART2 Rx and Tx
+        DCD     SSI1_IRQHandler             ; SSI1 Rx and Tx
+        DCD     Timer3A_IRQHandler          ; Timer 3 subtimer A
+        DCD     Timer3B_IRQHandler          ; Timer 3 subtimer B
+        DCD     I2C1_IRQHandler             ; I2C1 Master and Slave
+        DCD     QEI1_IRQHandler             ; Quadrature Encoder 1
+        DCD     CAN0_IRQHandler             ; CAN0
+        DCD     CAN1_IRQHandler             ; CAN1
+        DCD     CAN2_IRQHandler             ; CAN2
+        DCD     Default_Handler             ; Reserved
+        DCD     Hibernate_IRQHandler        ; Hibernate
+        DCD     USB0_IRQHandler             ; USB0
+        DCD     PWMGen3_IRQHandler          ; PWM Generator 3
+        DCD     uDMAST_IRQHandler           ; uDMA Software Transfer
+        DCD     uDMAError_IRQHandler        ; uDMA Error
+        DCD     ADC1Seq0_IRQHandler         ; ADC1 Sequence 0
+        DCD     ADC1Seq1_IRQHandler         ; ADC1 Sequence 1
+        DCD     ADC1Seq2_IRQHandler         ; ADC1 Sequence 2
+        DCD     ADC1Seq3_IRQHandler         ; ADC1 Sequence 3
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     GPIOPortJ_IRQHandler        ; GPIO Port J
+        DCD     GPIOPortK_IRQHandler        ; GPIO Port K
+        DCD     GPIOPortL_IRQHandler        ; GPIO Port L
+        DCD     SSI2_IRQHandler             ; SSI2 Rx and Tx
+        DCD     SSI3_IRQHandler             ; SSI3 Rx and Tx
+        DCD     UART3_IRQHandler            ; UART3 Rx and Tx
+        DCD     UART4_IRQHandler            ; UART4 Rx and Tx
+        DCD     UART5_IRQHandler            ; UART5 Rx and Tx
+        DCD     UART6_IRQHandler            ; UART6 Rx and Tx
+        DCD     UART7_IRQHandler            ; UART7 Rx and Tx
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     I2C2_IRQHandler             ; I2C2 Master and Slave
+        DCD     I2C3_IRQHandler             ; I2C3 Master and Slave
+        DCD     Timer4A_IRQHandler          ; Timer 4 subtimer A
+        DCD     Timer4B_IRQHandler          ; Timer 4 subtimer B
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Timer5A_IRQHandler          ; Timer 5 subtimer A
+        DCD     Timer5B_IRQHandler          ; Timer 5 subtimer B
+        DCD     WideTimer0A_IRQHandler      ; Wide Timer 0 subtimer A
+        DCD     WideTimer0B_IRQHandler      ; Wide Timer 0 subtimer B
+        DCD     WideTimer1A_IRQHandler      ; Wide Timer 1 subtimer A
+        DCD     WideTimer1B_IRQHandler      ; Wide Timer 1 subtimer B
+        DCD     WideTimer2A_IRQHandler      ; Wide Timer 2 subtimer A
+        DCD     WideTimer2B_IRQHandler      ; Wide Timer 2 subtimer B
+        DCD     WideTimer3A_IRQHandler      ; Wide Timer 3 subtimer A
+        DCD     WideTimer3B_IRQHandler      ; Wide Timer 3 subtimer B
+        DCD     WideTimer4A_IRQHandler      ; Wide Timer 4 subtimer A
+        DCD     WideTimer4B_IRQHandler      ; Wide Timer 4 subtimer B
+        DCD     WideTimer5A_IRQHandler      ; Wide Timer 5 subtimer A
+        DCD     WideTimer5B_IRQHandler      ; Wide Timer 5 subtimer B
+        DCD     FPU_IRQHandler              ; FPU
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     I2C4_IRQHandler             ; I2C4 Master and Slave
+        DCD     I2C5_IRQHandler             ; I2C5 Master and Slave
+        DCD     GPIOPortM_IRQHandler        ; GPIO Port M
+        DCD     GPIOPortN_IRQHandler        ; GPIO Port N
+        DCD     QEI2_IRQHandler             ; Quadrature Encoder 2
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     GPIOPortP0_IRQHandler       ; GPIO Port P (Summary or P0)
+        DCD     GPIOPortP1_IRQHandler       ; GPIO Port P1
+        DCD     GPIOPortP2_IRQHandler       ; GPIO Port P2
+        DCD     GPIOPortP3_IRQHandler       ; GPIO Port P3
+        DCD     GPIOPortP4_IRQHandler       ; GPIO Port P4
+        DCD     GPIOPortP5_IRQHandler       ; GPIO Port P5
+        DCD     GPIOPortP6_IRQHandler       ; GPIO Port P6
+        DCD     GPIOPortP7_IRQHandler       ; GPIO Port P7
+        DCD     GPIOPortQ0_IRQHandler       ; GPIO Port Q (Summary or Q0)
+        DCD     GPIOPortQ1_IRQHandler       ; GPIO Port Q1
+        DCD     GPIOPortQ2_IRQHandler       ; GPIO Port Q2
+        DCD     GPIOPortQ3_IRQHandler       ; GPIO Port Q3
+        DCD     GPIOPortQ4_IRQHandler       ; GPIO Port Q4
+        DCD     GPIOPortQ5_IRQHandler       ; GPIO Port Q5
+        DCD     GPIOPortQ6_IRQHandler       ; GPIO Port Q6
+        DCD     GPIOPortQ7_IRQHandler       ; GPIO Port Q7
+        DCD     GPIOPortR_IRQHandler        ; GPIO Port R
+        DCD     GPIOPortS_IRQHandler        ; GPIO Port S
+        DCD     PWM1Gen0_IRQHandler         ; PWM 1 Generator 0
+        DCD     PWM1Gen1_IRQHandler         ; PWM 1 Generator 1
+        DCD     PWM1Gen2_IRQHandler         ; PWM 1 Generator 2
+        DCD     PWM1Gen3_IRQHandler         ; PWM 1 Generator 3
+        DCD     PWM1Fault_IRQHandler        ; PWM 1 Fault
+
+        ; Extend the end of the Vector Table to the 2^10 boundary to ensure
+        ; that no other data or code will be placed up to address 0x400.
+        ; This might be necessary for NULL-pointer protection by the MPU,
+        ; where a protected region of 2^10 bytes spans over the Vector Table.
+        ALIGN  1024
 __Vectors_End
 
 __Vectors_Size  EQU     __Vectors_End - __Vectors
@@ -633,7 +639,6 @@ PWM1Fault_IRQHandler
 
 
 ;******************************************************************************
-;
 ; The function expected of the C library startup code for defining the stack
 ; and heap memory locations.  For the C library version of the startup code,
 ; provide this function so that the C library initialization code can find out
@@ -659,7 +664,6 @@ __user_initial_stackheap PROC
     ENDIF
 
 ;******************************************************************************
-;
 ; The function assert_failed defines the error/assertion handling policy
 ; for the application. After making sure that the stack is OK, this function
 ; calls Q_onAssert, which should NOT return (typically reset the CPU).

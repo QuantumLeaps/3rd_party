@@ -12,7 +12,7 @@ to  download the "emWin Simulation & Trial version" from SEGGER
 it in this directory.
 
 NOTE: The emWin example provided in examples\emwin has been built and
-tested against emWin 6.10 (SeggerEval_WIN32_MSVC_MinGW_GUI_V610.zip).
+tested against emWin v6.28 (SeggerEval_WIN32_MSVC_MinGW_GUI_V628.zip).
 
 After the installation of emWin, this directory should contain the
 following sub-directories and files:

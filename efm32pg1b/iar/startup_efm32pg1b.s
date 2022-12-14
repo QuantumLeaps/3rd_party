@@ -55,9 +55,9 @@
         PUBLIC  __Vectors_End
         PUBLIC  __Vectors_Size
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;
+;******************************************************************************
+; The vector table
+;
         DATA
 __vector_table
         DCD     sfe(CSTACK)
@@ -67,25 +67,25 @@ __vector_table
         DCD     MemManage_Handler           ; The MPU fault handler
         DCD     BusFault_Handler            ; The bus fault handler
         DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
         DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     PendSV_Handler              ; The PendSV handler
         DCD     SysTick_Handler             ; The SysTick handler
 
         ; IRQ handlers...
         DCD     EMU_IRQHandler              ; 0 - EMU
-        DCD     0                           ; 1 - Reserved
+        DCD     Default_Handler             ; 1 - Reserved
         DCD     WDOG0_IRQHandler            ; 2 - WDOG0
-        DCD     0                           ; 3 - Reserved
-        DCD     0                           ; 4 - Reserved
-        DCD     0                           ; 5 - Reserved
-        DCD     0                           ; 6 - Reserved
-        DCD     0                           ; 7 - Reserved
+        DCD     Default_Handler             ; 3 - Reserved
+        DCD     Default_Handler             ; 4 - Reserved
+        DCD     Default_Handler             ; 5 - Reserved
+        DCD     Default_Handler             ; 6 - Reserved
+        DCD     Default_Handler             ; 7 - Reserved
         DCD     LDMA_IRQHandler             ; 8 - LDMA
         DCD     GPIO_EVEN_IRQHandler        ; 9 - GPIO_EVEN
         DCD     TIMER0_IRQHandler           ; 10 - TIMER0
@@ -105,13 +105,19 @@ __vector_table
         DCD     MSC_IRQHandler              ; 24 - MSC
         DCD     CRYPTO_IRQHandler           ; 25 - CRYPTO
         DCD     LETIMER0_IRQHandler         ; 26 - LETIMER0
-        DCD     0                           ; 27 - Reserved
-        DCD     0                           ; 28 - Reserved
+        DCD     Default_Handler             ; 27 - Reserved
+        DCD     Default_Handler             ; 28 - Reserved
         DCD     RTCC_IRQHandler             ; 29 - RTCC
-        DCD     0                           ; 30 - Reserved
+        DCD     Default_Handler             ; 30 - Reserved
         DCD     CRYOTIMER_IRQHandler        ; 31 - CRYOTIMER
-        DCD     0                           ; 32 - Reserved
+        DCD     Default_Handler             ; 32 - Reserved
         DCD     FPUEH_IRQHandler            ; 33 - FPUEH
+
+        ; Extend the end of the Vector Table to the 2^8 boundary to ensure
+        ; that no other data or code will be placed up to address 0x100.
+        ; This might be necessary for NULL-pointer protection by the MPU,
+        ; where a protected region of 2^8 bytes spans over the Vector Table.
+        ALIGNRAM 8
 
 __Vectors_End
 
@@ -234,6 +240,7 @@ str_SysTick
 ; Weak IRQ handlers...
 ;
 
+        PUBWEAK  Default_Handler
         PUBWEAK  EMU_IRQHandler
         PUBWEAK  WDOG0_IRQHandler
         PUBWEAK  LDMA_IRQHandler
@@ -259,6 +266,7 @@ str_SysTick
         PUBWEAK  CRYOTIMER_IRQHandler
         PUBWEAK  FPUEH_IRQHandler
 
+Default_Handler
 EMU_IRQHandler
 WDOG0_IRQHandler
 LDMA_IRQHandler
@@ -310,7 +318,6 @@ assert_failed
         BL     Q_onAssert        ; call the application-specific handler
 
         B      .                 ; should not be reached, but just in case...
-
 
         END                      ; end of module
 

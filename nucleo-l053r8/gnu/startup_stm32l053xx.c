@@ -118,16 +118,16 @@ int const g_pfnVectors[] = {
     (int)&Reset_Handler,          /* Reset Handler                  */
     (int)&NMI_Handler,            /* NMI Handler                    */
     (int)&HardFault_Handler,      /* Hard Fault Handler             */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&SVC_Handler,            /* SVCall handler                 */
     (int)&DebugMon_Handler,       /* Debug monitor handler          */
-    0,                            /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&PendSV_Handler,         /* The PendSV handler             */
     (int)&SysTick_Handler,        /* The SysTick handler            */
 
@@ -146,14 +146,14 @@ int const g_pfnVectors[] = {
     (int)&DMA1_Channel4_5_6_7_IRQHandler, /* DMA1 Channel 4, 5, 6 and 7   */
     (int)&ADC1_COMP_IRQHandler,   /* ADC1, COMP1 and COMP2          */
     (int)&LPTIM1_IRQHandler,      /* LPTIM1                         */
-    0,                            /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&TIM2_IRQHandler,        /* TIM2                           */
-    0,                            /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&TIM6_DAC_IRQHandler,    /* TIM6 and DAC                   */
-    0,                            /* Reserved                       */
-    0,                            /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&TIM21_IRQHandler,       /* TIM21                          */
-    0,                            /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&TIM22_IRQHandler,       /* TIM22                          */
     (int)&I2C1_IRQHandler,        /* I2C1                           */
     (int)&I2C2_IRQHandler,        /* I2C2                           */
@@ -214,89 +214,84 @@ void Reset_Handler(void) {
 /* fault exception handlers ------------------------------------------------*/
 __attribute__((naked)) void NMI_Handler(void);
 void NMI_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_nmi\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_nmi: .asciz \"NMI\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_nmi       \n"
+    "    mov  r1,#1             \n"
+    "    b assert_failed        \n"
+    "str_nmi: .asciz \"NMI\"    \n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void MemManage_Handler(void);
 void MemManage_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_mem\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_mem: .asciz \"MemManage\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_mem       \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_mem: .asciz \"MemManage\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void HardFault_Handler(void);
 void HardFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_hrd\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_hrd: .asciz \"HardFault\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_hrd       \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_hrd: .asciz \"HardFault\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void BusFault_Handler(void);
 void BusFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_bus\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_bus: .asciz \"BusFault\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_bus       \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_bus: .asciz \"BusFault\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void UsageFault_Handler(void);
 void UsageFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_usage\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_usage: .asciz \"UsageFault\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_usage     \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_usage: .asciz \"UsageFault\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void Default_Handler(void);
 void Default_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_dflt\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_dflt: .asciz \"Default\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_dflt      \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_dflt: .asciz \"Default\"\n"
+    "  .align 2                 \n"
+);
 }
 
-
-/*****************************************************************************
-* The function assert_failed defines the error/assertion handling policy
-* for the application. After making sure that the stack is OK, this function
-* calls Q_onAssert, which should NOT return (typically reset the CPU).
+/*--------------------------------------------------------------------------*/
+/* The function assert_failed() provides a low-level handler for assertion
+* failures. It ultimately transfers control to Q_onAssert(), which defines
+* the error/assertion handling policy for the application.
 *
-* NOTE: the function Q_onAssert should NOT return.
-*****************************************************************************/
+* assert_failed() re-sets the stack pointer (MSP) to the original setting.
+* This is necessary to avoid cascading exceptions in case the stack was
+* OVERFLOWN.
+*/
 __attribute__ ((naked, noreturn))
 void assert_failed(char const *module, int loc) {
     /* re-set the SP in case of stack overflow */
-    __asm volatile (
-        "  MOV sp,%0\n\t"
-        : : "r" (&__stack_end__));
-
-    Q_onAssert(module, loc); /* call the application-specific QP handler */
-
-    for (;;) { /* should not be reached, but just in case loop forever... */
+    __asm volatile ("  MOV sp,%0" : : "r" (&__stack_end__));
+    Q_onAssert(module, loc); /* call the app-specific handler */
+    for (;;) {
     }
 }
-
-/****** End Of File *********************************************************/

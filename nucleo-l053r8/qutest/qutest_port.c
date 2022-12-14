@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Product: QUTEST port for NUCLEO-L053R8 board
-* Last updated for version 7.1.2
-* Last updated on  2022-10-06
+* Last updated for version 7.2.0
+* Last updated on  2022-12-13
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -71,7 +71,7 @@ void USART2_IRQHandler(void);
 * the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
 * QK_ISR_EXIT and they cannot post or publish events.
 */
-void USART2_IRQHandler(void) { /* used in QS-RX (kernel UNAWARE interrupt) */
+void USART2_IRQHandler(void) { /* used in QS-RX (see NOTE0) */
     /* is RX register NOT empty? */
     while ((USART2->ISR & (1U << 5)) != 0) {
         uint32_t b = USART2->RDR;
@@ -81,12 +81,12 @@ void USART2_IRQHandler(void) { /* used in QS-RX (kernel UNAWARE interrupt) */
 
 /* QS callbacks ============================================================*/
 uint8_t QS_onStartup(void const *arg) {
-    static uint8_t qsBuf[2*1024]; /* buffer for QS-TX channel */
-    static uint8_t qsRxBuf[256];  /* buffer for QS-RX channel */
+    Q_UNUSED_PAR(arg);
 
-    (void)arg; /* avoid the "unused parameter" compiler warning */
+    static uint8_t qsTxBuf[2*1024]; /* buffer for QS-TX channel */
+    static uint8_t qsRxBuf[256];    /* buffer for QS-RX channel */
 
-    QS_initBuf(qsBuf, sizeof(qsBuf));
+    QS_initBuf  (qsTxBuf, sizeof(qsTxBuf));
     QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
 
     /* NOTE: SystemInit() already called from the startup code
@@ -117,7 +117,7 @@ uint8_t QS_onStartup(void const *arg) {
 
     /* explicitly set NVIC priorities of all Cortex-M interrupts used */
     NVIC_SetPriorityGrouping(0U);
-    NVIC_SetPriority(USART2_IRQn,    0U); /* kernel UNAWARE interrupt */
+    NVIC_SetPriority(USART2_IRQn,    0U);
 
     /* enable the UART RX interrupt... */
     NVIC_EnableIRQ(USART2_IRQn); /* UART2 interrupt used for QS-RX */
@@ -129,12 +129,21 @@ void QS_onCleanup(void) {
 }
 /*..........................................................................*/
 void QS_onFlush(void) {
-    uint16_t b;
+    for (;;) {
+        QF_INT_DISABLE();
+        uint16_t b = QS_getByte();
+        QF_INT_ENABLE();
 
-    while ((b = QS_getByte()) != QS_EOD) {    /* while not End-Of-Data... */
-        while ((USART2->ISR & (1U << 7)) == 0U) { /* while TXE not empty */
+        if (b != QS_EOD) {
+            while ((USART2->ISR & (1U << 7U)) == 0U) {
+            }
+            USART2->TDR  = (b & 0xFFU);  /* put into the DR register */
         }
-        USART2->TDR  = (b & 0xFFU);  /* put into the DR register */
+        else {
+            break;
+        }
+    }
+    while ((USART2->ISR & (1U << 7U)) == 0U) { /* while TXE not empty */
     }
 }
 /*..........................................................................*/
@@ -144,11 +153,9 @@ void QS_onReset(void) {
 }
 /*..........................................................................*/
 void QS_doOutput(void) {
-    if ((USART2->ISR & (1U << 7)) != 0) {  /* is TXE empty? */
-        uint16_t b;
-
+    if ((USART2->ISR & (1U << 7U)) != 0U) { /* is TXE empty? */
         QF_INT_DISABLE();
-        b = QS_getByte();
+        uint16_t b = QS_getByte();
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  /* not End-Of-Data? */
@@ -168,10 +175,8 @@ void QS_onTestLoop() {
         QS_rxParse();  /* parse all the received bytes */
 
         if ((USART2->ISR & (1U << 7)) != 0) {  /* is TXE empty? */
-            uint16_t b;
-
             QF_INT_DISABLE();
-            b = QS_getByte();
+            uint16_t b = QS_getByte();
             QF_INT_ENABLE();
 
             if (b != QS_EOD) {  /* not End-Of-Data? */
@@ -184,3 +189,13 @@ void QS_onTestLoop() {
     */
     QS_rxPriv_.inTestLoop = true;
 }
+/*============================================================================
+* NOTE0:
+* ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
+* consequently *all* interrupts are "kernel-aware". This means that
+* the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
+* perform QS-TX). That can lead to lost some of the received bytes, and
+* consequently some QUTest tests might be failing.
+* A fix for that would be to use DMA for handling QS-RX, but this is
+* currently not implemented.
+*/

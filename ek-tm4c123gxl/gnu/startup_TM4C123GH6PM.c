@@ -193,8 +193,13 @@ void PWM1Fault_IRQHandler  (void) __attribute__ ((weak, alias("Default_Handler")
 
 
 /*..........................................................................*/
+/* The Vector Table is defined to have the size of 0x400 to ensure
+* that no other data or code will be placed up to address 0x400.
+* This might be necessary for NULL-pointer protection by the MPU,
+* where a protected region of 2^10 bytes spans over the Vector Table.
+*/
 __attribute__ ((section(".isr_vector")))
-int const g_pfnVectors[] = {
+int const g_pfnVectors[0x400/sizeof(int)] = {
     (int)&__stack_end__,          /* Top of Stack                    */
     (int)&Reset_Handler,          /* Reset Handler                   */
     (int)&NMI_Handler,            /* NMI Handler                     */
@@ -202,13 +207,13 @@ int const g_pfnVectors[] = {
     (int)&MemManage_Handler,      /* The MPU fault handler           */
     (int)&BusFault_Handler,       /* The bus fault handler           */
     (int)&UsageFault_Handler,     /* The usage fault handler         */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&SVC_Handler,            /* SVCall handler                  */
     (int)&DebugMon_Handler,       /* Debug monitor handler           */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&PendSV_Handler,         /* The PendSV handler              */
     (int)&SysTick_Handler,        /* The SysTick handler             */
 
@@ -255,7 +260,7 @@ int const g_pfnVectors[] = {
     (int)&CAN0_IRQHandler,        /* CAN0                            */
     (int)&CAN1_IRQHandler,        /* CAN1                            */
     (int)&CAN2_IRQHandler,        /* CAN2                            */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&Hibernate_IRQHandler,   /* Hibernate                       */
     (int)&USB0_IRQHandler,        /* USB0                            */
     (int)&PWMGen3_IRQHandler,     /* PWM Generator 3                 */
@@ -265,8 +270,8 @@ int const g_pfnVectors[] = {
     (int)&ADC1Seq1_IRQHandler,    /* ADC1 Sequence 1                 */
     (int)&ADC1Seq2_IRQHandler,    /* ADC1 Sequence 2                 */
     (int)&ADC1Seq3_IRQHandler,    /* ADC1 Sequence 3                 */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&GPIOPortJ_IRQHandler,   /* GPIO Port J                     */
     (int)&GPIOPortK_IRQHandler,   /* GPIO Port K                     */
     (int)&GPIOPortL_IRQHandler,   /* GPIO Port L                     */
@@ -277,34 +282,34 @@ int const g_pfnVectors[] = {
     (int)&UART5_IRQHandler,       /* UART5 Rx and Tx                 */
     (int)&UART6_IRQHandler,       /* UART6 Rx and Tx                 */
     (int)&UART7_IRQHandler,       /* UART7 Rx and Tx                 */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+     (int)&Default_Handler,        /* Reserved                        */
     (int)&I2C2_IRQHandler,        /* I2C2 Master and Slave           */
     (int)&I2C3_IRQHandler,        /* I2C3 Master and Slave           */
     (int)&Timer4A_IRQHandler,     /* Timer 4 subtimer A              */
     (int)&Timer4B_IRQHandler,     /* Timer 4 subtimer B              */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&Timer5A_IRQHandler,     /* Timer 5 subtimer A              */
     (int)&Timer5B_IRQHandler,     /* Timer 5 subtimer B              */
     (int)&WideTimer0A_IRQHandler, /* Wide Timer 0 subtimer A         */
@@ -320,15 +325,15 @@ int const g_pfnVectors[] = {
     (int)&WideTimer5A_IRQHandler, /* Wide Timer 5 subtimer A         */
     (int)&WideTimer5B_IRQHandler, /* Wide Timer 5 subtimer B         */
     (int)&FPU_IRQHandler,         /* FPU                             */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&I2C4_IRQHandler,        /* I2C4 Master and Slave           */
     (int)&I2C5_IRQHandler,        /* I2C5 Master and Slave           */
     (int)&GPIOPortM_IRQHandler,   /* GPIO Port M                     */
     (int)&GPIOPortN_IRQHandler,   /* GPIO Port N                     */
     (int)&QEI2_IRQHandler,        /* Quadrature Encoder 2            */
-    0,                            /* Reserved                        */
-    0,                            /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
     (int)&GPIOPortP0_IRQHandler,  /* GPIO Port P (Summary or P0)     */
     (int)&GPIOPortP1_IRQHandler,  /* GPIO Port P1                    */
     (int)&GPIOPortP2_IRQHandler,  /* GPIO Port P2                    */
@@ -401,89 +406,94 @@ void Reset_Handler(void) {
 /* fault exception handlers ------------------------------------------------*/
 __attribute__((naked)) void NMI_Handler(void);
 void NMI_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_nmi\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_nmi: .asciz \"NMI\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_nmi       \n"
+    "    mov  r1,#1             \n"
+    "    b assert_failed        \n"
+    "str_nmi: .asciz \"NMI\"    \n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void MemManage_Handler(void);
 void MemManage_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_mem\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_mem: .asciz \"MemManage\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_mem       \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_mem: .asciz \"MemManage\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void HardFault_Handler(void);
 void HardFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_hrd\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_hrd: .asciz \"HardFault\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_hrd       \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_hrd: .asciz \"HardFault\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void BusFault_Handler(void);
 void BusFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_bus\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_bus: .asciz \"BusFault\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_bus       \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_bus: .asciz \"BusFault\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void UsageFault_Handler(void);
 void UsageFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_usage\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_usage: .asciz \"UsageFault\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_usage     \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_usage: .asciz \"UsageFault\"\n"
+    "  .align 2                 \n"
+);
 }
 /*..........................................................................*/
 __attribute__((naked)) void Default_Handler(void);
 void Default_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_dflt\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_dflt: .asciz \"Default\"\n\t"
-        "  .align 2\n\t"
-    );
+__asm volatile (
+    "    ldr  r0,=str_dflt      \n"
+    "    mov  r1,#1             \n"
+    "    b    assert_failed     \n"
+    "str_dflt: .asciz \"Default\"\n"
+    "  .align 2                 \n"
+);
 }
 
-
-/*****************************************************************************
-* The function assert_failed defines the error/assertion handling policy
-* for the application. After making sure that the stack is OK, this function
-* calls Q_onAssert, which should NOT return (typically reset the CPU).
+/*--------------------------------------------------------------------------*/
+/* The function assert_failed() provides a low-level handler for assertion
+* failures. It ultimately transfers control to Q_onAssert(), which defines
+* the error/assertion handling policy for the application.
 *
-* NOTE: the function Q_onAssert should NOT return.
-*****************************************************************************/
+* assert_failed() re-sets the stack pointer (MSP) to the original setting.
+* This is necessary to avoid cascading exceptions in case the stack was
+* OVERFLOWN.
+*
+* Also, if assert_failed() detects that it executes in the exception context,
+* it performs exception-return to Q_onAssert(), so that Q_onAssert() is
+* always entered in the thread context.
+*
+* NOTE: assert_failed() assumes that Q_onAssert() does NOT return.
+*/
 __attribute__ ((naked, noreturn))
 void assert_failed(char const *module, int loc) {
-    /* re-set the SP in case of stack overflow */
-    __asm volatile (
-        "  MOV sp,%0\n\t"
-        : : "r" (&__stack_end__));
+
+/* re-set the SP in case of stack overflow */
+__asm volatile (
+    "  MOV     sp,%0" : : "r" (&__stack_end__));
 
     Q_onAssert(module, loc); /* call the application-specific QP handler */
 
     for (;;) { /* should not be reached, but just in case loop forever... */
     }
 }
-
-/****** End Of File *********************************************************/

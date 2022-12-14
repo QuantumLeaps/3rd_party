@@ -84,9 +84,8 @@ void UART0_IRQHandler(void) {
 
 /* QS callbacks ============================================================*/
 uint8_t QS_onStartup(void const *arg) {
-    static uint8_t qsTxBuf[2*1024]; /* buffer for QS transmit channel */
-    static uint8_t qsRxBuf[100];    /* buffer for QS receive channel */
-    uint32_t tmp;
+    static uint8_t qsTxBuf[2*1024]; /* buffer for QS-TX channel */
+    static uint8_t qsRxBuf[256];    /* buffer for QS-RX channel */
 
     (void)arg; /* unused parameter */
 
@@ -118,7 +117,7 @@ uint8_t QS_onStartup(void const *arg) {
     SYSCTL->RCGCGPIO |= (1U << 0); /* enable Run mode for GPIOA */
 
     /* configure UART0 pins for UART operation */
-    tmp = (1U << 0) | (1U << 1);
+    uint32_t tmp = (1U << 0) | (1U << 1);
     GPIOA->DIR   &= ~tmp;
     GPIOA->SLR   &= ~tmp;
     GPIOA->ODR   &= ~tmp;

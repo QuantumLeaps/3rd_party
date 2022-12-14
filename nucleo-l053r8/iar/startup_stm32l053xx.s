@@ -64,52 +64,58 @@ __vector_table
         DCD     Reset_Handler               ; Reset Handler
         DCD     NMI_Handler                 ; NMI Handler
         DCD     HardFault_Handler           ; Hard Fault Handler
-        DCD     MemManage_Handler           ; The MPU fault handler
-        DCD     BusFault_Handler            ; The bus fault handler
-        DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
         DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     PendSV_Handler              ; The PendSV handler
         DCD     SysTick_Handler             ; The SysTick handler
 
         ; IRQ handlers...
-        DCD     WWDG_IRQHandler                ; Window Watchdog
-        DCD     PVD_IRQHandler                 ; PVD through EXTI Line detect
-        DCD     RTC_IRQHandler                 ; RTC through EXTI Line
-        DCD     FLASH_IRQHandler               ; FLASH
-        DCD     RCC_CRS_IRQHandler             ; RCC and CRS
-        DCD     EXTI0_1_IRQHandler             ; EXTI Line 0 and 1
-        DCD     EXTI2_3_IRQHandler             ; EXTI Line 2 and 3
-        DCD     EXTI4_15_IRQHandler            ; EXTI Line 4 to 15
-        DCD     TSC_IRQHandler                 ; TSC
-        DCD     DMA1_Channel1_IRQHandler       ; DMA1 Channel 1
-        DCD     DMA1_Channel2_3_IRQHandler     ; DMA1 Channel 2 and Channel 3
+        DCD     WWDG_IRQHandler             ; Window Watchdog
+        DCD     PVD_IRQHandler              ; PVD through EXTI Line detect
+        DCD     RTC_IRQHandler              ; RTC through EXTI Line
+        DCD     FLASH_IRQHandler            ; FLASH
+        DCD     RCC_CRS_IRQHandler          ; RCC and CRS
+        DCD     EXTI0_1_IRQHandler          ; EXTI Line 0 and 1
+        DCD     EXTI2_3_IRQHandler          ; EXTI Line 2 and 3
+        DCD     EXTI4_15_IRQHandler         ; EXTI Line 4 to 15
+        DCD     TSC_IRQHandler              ; TSC
+        DCD     DMA1_Channel1_IRQHandler    ; DMA1 Channel 1
+        DCD     DMA1_Channel2_3_IRQHandler  ; DMA1 Channel 2 and Channel 3
         DCD     DMA1_Channel4_5_6_7_IRQHandler ; DMA1 Channel 4, 5, 6 and 7
-        DCD     ADC1_COMP_IRQHandler           ; ADC1, COMP1 and COMP2
-        DCD     LPTIM1_IRQHandler              ; LPTIM1
-        DCD     0                              ; Reserved
-        DCD     TIM2_IRQHandler                ; TIM2
-        DCD     0                              ; Reserved
-        DCD     TIM6_DAC_IRQHandler            ; TIM6 and DAC
-        DCD     0                              ; Reserved
-        DCD     0                              ; Reserved
-        DCD     TIM21_IRQHandler               ; TIM21
-        DCD     0                              ; Reserved
-        DCD     TIM22_IRQHandler               ; TIM22
-        DCD     I2C1_IRQHandler                ; I2C1
-        DCD     I2C2_IRQHandler                ; I2C2
-        DCD     SPI1_IRQHandler                ; SPI1
-        DCD     SPI2_IRQHandler                ; SPI2
-        DCD     USART1_IRQHandler              ; USART1
-        DCD     USART2_IRQHandler              ; USART2
-        DCD     RNG_LPUART1_IRQHandler         ; RNG and LPUART1
-        DCD     LCD_IRQHandler                 ; LCD
-        DCD     USB_IRQHandler                 ; USB
+        DCD     ADC1_COMP_IRQHandler        ; ADC1, COMP1 and COMP2
+        DCD     LPTIM1_IRQHandler           ; LPTIM1
+        DCD     Default_Handler             ; Reserved
+        DCD     TIM2_IRQHandler             ; TIM2
+        DCD     Default_Handler             ; Reserved
+        DCD     TIM6_DAC_IRQHandler         ; TIM6 and DAC
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     TIM21_IRQHandler            ; TIM21
+        DCD     Default_Handler             ; Reserved
+        DCD     TIM22_IRQHandler            ; TIM22
+        DCD     I2C1_IRQHandler             ; I2C1
+        DCD     I2C2_IRQHandler             ; I2C2
+        DCD     SPI1_IRQHandler             ; SPI1
+        DCD     SPI2_IRQHandler             ; SPI2
+        DCD     USART1_IRQHandler           ; USART1
+        DCD     USART2_IRQHandler           ; USART2
+        DCD     RNG_LPUART1_IRQHandler      ; RNG and LPUART1
+        DCD     LCD_IRQHandler              ; LCD
+        DCD     USB_IRQHandler              ; USB
+
+        ; Extend the end of the Vector Table to the 2^8 boundary to ensure
+        ; that no other data or code will be placed up to address 0x100.
+        ; This might be necessary for NULL-pointer protection by the MPU,
+        ; where a protected region of 2^8 bytes spans over the Vector Table.
+        ALIGNRAM 8
 
 __Vectors_End
 
@@ -128,6 +134,17 @@ __Vectors_Size  EQU   __Vectors_End - __Vectors
         EXTERN  __iar_program_start
 Reset_Handler
         BL      SystemInit  ; CMSIS system initialization
+
+        ; pre-fill the CSTACK with 0xDEADBEEF...................
+        LDR     r0,=0xDEADBEEF
+        MOV     r1,r0
+        LDR     r2,=sfb(CSTACK)
+        LDR     r3,=sfe(CSTACK)
+Reset_stackInit_fill:
+        STMIA   r2!,{r0,r1}
+        CMP     r2,r3
+        BLT.N   Reset_stackInit_fill
+
         BL      __iar_program_start ; IAR startup code
 ;.............................................................................
         PUBWEAK NMI_Handler
@@ -220,7 +237,8 @@ str_SysTick
 ;
 ; Weak IRQ handlers...
 ;
-;.............................................................................
+
+        PUBWEAK  Default_Handler
         PUBWEAK  WWDG_IRQHandler
         PUBWEAK  PVD_IRQHandler
         PUBWEAK  RTC_IRQHandler
@@ -249,6 +267,7 @@ str_SysTick
         PUBWEAK  LCD_IRQHandler
         PUBWEAK  USB_IRQHandler
 
+Default_Handler
 WWDG_IRQHandler
 PVD_IRQHandler
 RTC_IRQHandler
@@ -302,7 +321,6 @@ assert_failed
         BL     Q_onAssert        ; call the application-specific handler
 
         B      .                 ; should not be reached, but just in case...
-
 
         END                      ; end of module
 

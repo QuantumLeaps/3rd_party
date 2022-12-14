@@ -1,40 +1,36 @@
-//! @file
-//! @brief QUTEST port for NUCLEO-L053R8 board
-//! @cond
 //============================================================================
-//! Last updated for: @qpcpp_7_1_2
-//! Last updated on  2022-10-06
-//!
-//!                    Q u a n t u m  L e a P s
-//!                    ------------------------
-//!                    Modern Embedded Software
-//!
-//! Copyright (C) 2005 Quantum Leaps. All rights reserved.
-//!
-//! This program is open source software: you can redistribute it and/or
-//! modify it under the terms of the GNU General Public License as published
-//! by the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! Alternatively, this program may be distributed and modified under the
-//! terms of Quantum Leaps commercial licenses, which expressly supersede
-//! the GNU General Public License and are specifically designed for
-//! licensees interested in retaining the proprietary status of their code.
-//!
-//! This program is distributed in the hope that it will be useful,
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//! GNU General Public License for more details.
-//!
-//! You should have received a copy of the GNU General Public License
-//! along with this program. If not, see <www.gnu.org/licenses>.
-//!
-//! Contact information:
-//! <www.state-machine.com/licensing>
-//! <info@state-machine.com>
+//! Product: QUTEST port for the STM32 NUCLEO-L053R8 board
+// Last updated for version 7.2.0
+// Last updated on  2022-12-14
+//
+//                    Q u a n t u m  L e a P s
+//                    ------------------------
+//                    Modern Embedded Software
+//
+// Copyright (C) 2005 Quantum Leaps. All rights reserved.
+//
+// This program is open source software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this program may be distributed and modified under the
+// terms of Quantum Leaps commercial licenses, which expressly supersede
+// the GNU General Public License and are specifically designed for
+// licensees interested in retaining the proprietary status of their code.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <www.gnu.org/licenses>.
+//
+// Contact information:
+// <www.state-machine.com/licensing>
+// <info@state-machine.com>
 //============================================================================
-//! @endcond
-
 #ifndef Q_SPY
     #error "Q_SPY must be defined to compile qutest_port.cpp"
 #endif // Q_SPY
@@ -45,7 +41,7 @@
 #include "qs_pkg.hpp"  // QS package-scope interface
 #include "qassert.h"   // QP embedded systems-friendly assertions
 
-#include "stm32l0xx.h"  // CMSIS-compliant header file for the MCU used
+#include "stm32l0xx.h" // CMSIS-compliant header file for the MCU used
 // add other drivers if necessary...
 
 //Q_DEFINE_THIS_MODULE("qutest_port")
@@ -89,7 +85,7 @@ void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrupt)
 } // extern "C"
 // QS callbacks ==============================================================
 bool QS::onStartup(void const *arg) {
-    (void)arg; // unused parameter
+    Q_UNUSED_PAR(arg);
 
     static std::uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
     static std::uint8_t qsRxBuf[256];    // buffer for QS-RX channel
@@ -125,29 +121,34 @@ bool QS::onStartup(void const *arg) {
 
     // explicitly set NVIC priorities of all Cortex-M interrupts used
     NVIC_SetPriorityGrouping(0U);
-    NVIC_SetPriority(USART2_IRQn,    0U); // kernel UNAWARE interrupt
+    NVIC_SetPriority(USART2_IRQn, 0U);
 
     // enable the UART RX interrupt...
     NVIC_EnableIRQ(USART2_IRQn); // UART2 interrupt used for QS-RX
 
-    return true; // return success
+    return true; // success
 }
 //............................................................................
 void QS::onCleanup(void) {
 }
 //............................................................................
 void QS::onFlush(void) {
-    std::uint16_t b;
-
-    QF_INT_DISABLE();
-    while ((b = getByte()) != QS_EOD) { // while not End-Of-Data...
-        QF_INT_ENABLE();
-        while ((USART2->ISR & (1U << 7)) == 0U) { // while TXE not empty
-        }
-        USART2->TDR  = (b & 0xFFU);  // put into the DR register
+   for (;;) {
         QF_INT_DISABLE();
+        std::uint16_t b = getByte();
+        QF_INT_ENABLE();
+
+        if (b != QS_EOD) {
+            while ((USART2->ISR & (1U << 7U)) == 0U) {
+            }
+            USART2->TDR  = (b & 0xFFU);  // put into the DR register
+        }
+        else {
+            break;
+        }
     }
-    QF_INT_ENABLE();
+    while ((USART2->ISR & (1U << 7U)) == 0U) { // while TXE not empty
+    }
 }
 //............................................................................
 //! callback function to reset the target (to be implemented in the BSP)
@@ -171,10 +172,6 @@ void QS::onTestLoop() {
     rxPriv_.inTestLoop = true;
     while (rxPriv_.inTestLoop) {
 
-        // toggle an LED on and then off (not enough LEDs, see NOTE02)
-        GPIOA->BSRR |= (LED_LD2);        // turn LED[n] on
-        GPIOA->BSRR |= (LED_LD2 << 16);  // turn LED[n] off
-
         rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7)) != 0) {  // is TXE empty?
@@ -188,3 +185,13 @@ void QS::onTestLoop() {
     // which can happen through the calls to QS_TEST_PAUSE().
     rxPriv_.inTestLoop = true;
 }
+//============================================================================
+// NOTE0:
+// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
+// consequently *all* interrupts are "kernel-aware". This means that
+// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
+// perform QS-TX). That can lead to lost some of the received bytes, and
+// consequently some QUTest tests might be failing.
+// A fix for that would be to use DMA for handling QS-RX, but this is
+// currently not implemented.
+//

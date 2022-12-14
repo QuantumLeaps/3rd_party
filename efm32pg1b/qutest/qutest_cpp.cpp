@@ -1,40 +1,36 @@
-//! @file
-//! @brief QUTEST port for the EFM32-SLSTK3401A board
-//! @cond
 //============================================================================
-//! Last updated for version 7.1.0
-//! Last updated on  2022-08-27
-//!
-//!                    Q u a n t u m  L e a P s
-//!                    ------------------------
-//!                    Modern Embedded Software
-//!
-//! Copyright (C) 2005-2020 Quantum Leaps. All rights reserved.
-//!
-//! This program is open source software: you can redistribute it and/or
-//! modify it under the terms of the GNU General Public License as published
-//! by the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! Alternatively, this program may be distributed and modified under the
-//! terms of Quantum Leaps commercial licenses, which expressly supersede
-//! the GNU General Public License and are specifically designed for
-//! licensees interested in retaining the proprietary status of their code.
-//!
-//! This program is distributed in the hope that it will be useful,
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//! GNU General Public License for more details.
-//!
-//! You should have received a copy of the GNU General Public License
-//! along with this program. If not, see <www.gnu.org/licenses>.
-//!
-//! Contact information:
-//! <www.state-machine.com/licensing>
-//! <info@state-machine.com>
+//! Product: QUTEST port for the EMF32 Pearl Gecko board
+// Last updated for version 7.2.0
+// Last updated on  2022-12-14
+//
+//                    Q u a n t u m  L e a P s
+//                    ------------------------
+//                    Modern Embedded Software
+//
+// Copyright (C) 2005 Quantum Leaps. All rights reserved.
+//
+// This program is open source software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this program may be distributed and modified under the
+// terms of Quantum Leaps commercial licenses, which expressly supersede
+// the GNU General Public License and are specifically designed for
+// licensees interested in retaining the proprietary status of their code.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <www.gnu.org/licenses>.
+//
+// Contact information:
+// <www.state-machine.com/licensing>
+// <info@state-machine.com>
 //============================================================================
-//! @endcond
-
 #ifndef Q_SPY
     #error "Q_SPY must be defined to compile qutest_port.cpp"
 #endif // Q_SPY
@@ -45,10 +41,10 @@
 #include "qs_pkg.hpp"  // QS package-scope interface
 #include "qassert.h"   // QP embedded systems-friendly assertions
 
-#include "em_device.h"  // the device specific header (SiLabs)
-#include "em_cmu.h"     // Clock Management Unit (SiLabs)
-#include "em_gpio.h"    // GPIO (SiLabs)
-#include "em_usart.h"   // USART (SiLabs)
+#include "em_device.h" // the device specific header (SiLabs)
+#include "em_cmu.h"    // Clock Management Unit (SiLabs)
+#include "em_gpio.h"   // GPIO (SiLabs)
+#include "em_usart.h"  // USART (SiLabs)
 // add other drivers if necessary...
 
 //Q_DEFINE_THIS_MODULE("qutest_port")
@@ -74,8 +70,8 @@ extern "C" {
 
 // ISR for receiving bytes from the QSPY Back-End
 // NOTE: This ISR is "QF-unaware" meaning that it does not interact with
-// the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
-// QK_ISR_EXIT and they cannot post or publish events.
+// the QF/QK and is not disabled. Such ISRs don't need to call
+// QK/QXK_ISR_EXIT and they cannot post or publish events.
 //
 void USART0_RX_IRQHandler(void) {
     // while RX FIFO NOT empty
@@ -89,25 +85,10 @@ void USART0_RX_IRQHandler(void) {
 
 // QS callbacks ==============================================================
 bool QS::onStartup(void const *arg) {
-    (void)arg; // unused parameter
+    Q_UNUSED_PAR(arg);
 
-    static uint8_t qsTxBuf[2*1024]; // buffer for QS transmit channel
-    static uint8_t qsRxBuf[100];    // buffer for QS receive channel
-    static USART_InitAsync_TypeDef init = {
-        usartEnable,      // Enable RX/TX when init completed
-        0,                // Use current clock for configuring baudrate
-        115200,           // 115200 bits/s
-        usartOVS16,       // 16x oversampling
-        usartDatabits8,   // 8 databits
-        usartNoParity,    // No parity
-        usartStopbits1,   // 1 stopbit
-        0,                // Do not disable majority vote
-        0,                // Not USART PRS input mode
-        usartPrsRxCh0,    // PRS channel 0
-        0,                // Auto CS functionality enable/disable switch
-        0,                // Auto CS Hold cycles
-        0                 // Auto CS Setup cycles
-    };
+    static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
 
     initBuf  (qsTxBuf, sizeof(qsTxBuf));
     rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -125,6 +106,21 @@ bool QS::onStartup(void const *arg) {
     CMU_ClockEnable(cmuClock_USART0, true);
 
     // configure the UART for the desired baud rate, 8-N-1 operation
+    static USART_InitAsync_TypeDef init = {
+        usartEnable,      // Enable RX/TX when init completed
+        0,                // Use current clock for configuring baudrate
+        115200,           // 115200 bits/s
+        usartOVS16,       // 16x oversampling
+        usartDatabits8,   // 8 databits
+        usartNoParity,    // No parity
+        usartStopbits1,   // 1 stopbit
+        0,                // Do not disable majority vote
+        0,                // Not USART PRS input mode
+        usartPrsRxCh0,    // PRS channel 0
+        0,                // Auto CS functionality enable/disable switch
+        0,                // Auto CS Hold cycles
+        0                 // Auto CS Setup cycles
+    };
     init.enable = usartDisable;
     USART_InitAsync(l_USART0, &init);
 
@@ -158,18 +154,22 @@ void QS::onCleanup(void) {
 }
 //............................................................................
 void QS::onFlush(void) {
-    uint16_t b;
-
-    QF_INT_DISABLE();
-    while ((b = getByte()) != QS_EOD) { // while not End-Of-Data...
-        QF_INT_ENABLE();
-        // while TXE not empty
-        while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
-        }
-        l_USART0->TXDATA  = (b & 0xFFU); // put into the DR register
+   for (;;) {
         QF_INT_DISABLE();
+        std::uint16_t b = getByte();
+        QF_INT_ENABLE();
+
+        if (b != QS_EOD) {
+            while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
+            }
+            l_USART0->TXDATA  = (b & 0xFFU);  /* put into the DR register */
+        }
+        else {
+            break;
+        }
     }
-    QF_INT_ENABLE();
+    while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
+    }
 }
 //............................................................................
 // callback function to reset the target (to be implemented in the BSP)
