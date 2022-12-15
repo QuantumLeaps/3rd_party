@@ -1,7 +1,7 @@
 //============================================================================
 //! Product: QUTEST port for the EK-TM4C123GXL board
 // Last updated for version 7.2.0
-// Last updated on  2022-12-14
+// Last updated on  2022-12-15
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -156,6 +156,12 @@ bool QS::onStartup(void const *arg) {
 }
 //............................................................................
 void QS::onCleanup(void) {
+    // wait as long as the UART is busy
+    while ((UART0->FR & UART_FR_TXFE) == 0) {
+    }
+    // delay before returning to allow all produced QS bytes to be received
+    for (std::uint32_t volatile dly_ctr = 100000U; dly_ctr > 0U; --dly_ctr) {
+    }
 }
 //............................................................................
 void QS::onFlush(void) {
@@ -167,7 +173,7 @@ void QS::onFlush(void) {
         while ((UART0->FR & UART_FR_TXFE) == 0) {
         }
 
-        while (fifo-- != 0) {    // any bytes in the block?
+        while (fifo-- != 0) {     // any bytes in the block?
             UART0->DR = *block++; // put into the TX FIFO
         }
         fifo = UART_TXFIFO_DEPTH; // re-load the Tx FIFO depth
@@ -207,8 +213,8 @@ void QS::onTestLoop() {
         rxParse();  // parse all the received bytes
 
         if ((UART0->FR & UART_FR_TXFE) != 0U) {  // TX done?
-            uint16_t fifo = UART_TXFIFO_DEPTH;   // max bytes we can accept
-            uint8_t const *block;
+            std::uint16_t fifo = UART_TXFIFO_DEPTH; // max bytes we can accept
+            std::uint8_t const *block;
 
 
             block = getBlock(&fifo);  // try to get next block to transmit

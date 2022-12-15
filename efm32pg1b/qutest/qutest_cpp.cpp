@@ -1,7 +1,7 @@
 //============================================================================
 //! Product: QUTEST port for the EMF32 Pearl Gecko board
 // Last updated for version 7.2.0
-// Last updated on  2022-12-14
+// Last updated on  2022-12-15
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -32,7 +32,7 @@
 // <info@state-machine.com>
 //============================================================================
 #ifndef Q_SPY
-    #error "Q_SPY must be defined to compile qutest_port.cpp"
+    #error "Q_SPY must be defined to compile qutest_cpp.cpp"
 #endif // Q_SPY
 
 #define QP_IMPL        // this is QP implementation
@@ -151,6 +151,12 @@ bool QS::onStartup(void const *arg) {
 }
 //............................................................................
 void QS::onCleanup(void) {
+    // wait as long as the UART is busy
+    while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
+    }
+    // delay before returning to allow all produced QS bytes to be received
+    for (std::uint32_t volatile dly_ctr = 100000U; dly_ctr > 0U; --dly_ctr) {
+    }
 }
 //............................................................................
 void QS::onFlush(void) {
@@ -162,7 +168,7 @@ void QS::onFlush(void) {
         if (b != QS_EOD) {
             while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
             }
-            l_USART0->TXDATA  = (b & 0xFFU);  /* put into the DR register */
+            l_USART0->TXDATA  = (b & 0xFFU);
         }
         else {
             break;
@@ -198,7 +204,7 @@ void QS::onTestLoop() {
         if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) { // is TXE empty?
             uint16_t b = getByte();
             if (b != QS_EOD) {  // not End-Of-Data?
-                l_USART0->TXDATA = (b & 0xFFU); // put into the DR register
+                l_USART0->TXDATA = (b & 0xFFU);
             }
         }
     }

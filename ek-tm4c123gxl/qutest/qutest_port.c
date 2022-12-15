@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Product: QUTEST port for the EK-TM4C123GXL board
-* Last updated for version 7.1.0
-* Last updated on  2022-08-21
+* Last updated for version 7.2.0
+* Last updated on  2022-12-15
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -154,6 +154,12 @@ uint8_t QS_onStartup(void const *arg) {
 }
 /*..........................................................................*/
 void QS_onCleanup(void) {
+    /* wait as long as the UART is busy */
+    while ((UART0->FR & UART_FR_TXFE) == 0) {
+    }
+    /* delay before returning to allow all produced QS bytes to be received */
+    for (uint32_t volatile dly_ctr = 100000U; dly_ctr > 0U; --dly_ctr) {
+    }
 }
 /*..........................................................................*/
 void QS_onFlush(void) {

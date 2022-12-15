@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Product: QUTEST port for the MSP-EXP430F5529LP board
-* Last updated for version 7.1.0
-* Last updated on  2022-08-21
+* Last updated for version 7.2.0
+* Last updated on  2022-12-15
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -115,6 +115,12 @@ uint8_t QS_onStartup(void const *arg) {
 }
 /*..........................................................................*/
 void QS_onCleanup(void) {
+    /* wait as long as the UART is busy */
+    while ((UCA1STAT & UCBUSY) != 0U) { /* TX busy? */
+    }
+    /* delay before returning to allow all produced QS bytes to be received */
+    for (uint32_t volatile dly_ctr = 1000U; dly_ctr > 0U; --dly_ctr) {
+    }
 }
 /*..........................................................................*/
 void QS_onFlush(void) {

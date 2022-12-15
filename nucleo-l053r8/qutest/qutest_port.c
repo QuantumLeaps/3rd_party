@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Product: QUTEST port for NUCLEO-L053R8 board
 * Last updated for version 7.2.0
-* Last updated on  2022-12-13
+* Last updated on  2022-12-15
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -126,6 +126,12 @@ uint8_t QS_onStartup(void const *arg) {
 }
 /*..........................................................................*/
 void QS_onCleanup(void) {
+    /* wait as long as the UART is busy */
+    while ((USART2->ISR & (1U << 7U)) == 0U) {
+    }
+    /* delay before returning to allow all produced QS bytes to be received */
+    for (uint32_t volatile dly_ctr = 10000U; dly_ctr > 0U; --dly_ctr) {
+    }
 }
 /*..........................................................................*/
 void QS_onFlush(void) {
@@ -142,8 +148,6 @@ void QS_onFlush(void) {
         else {
             break;
         }
-    }
-    while ((USART2->ISR & (1U << 7U)) == 0U) { /* while TXE not empty */
     }
 }
 /*..........................................................................*/

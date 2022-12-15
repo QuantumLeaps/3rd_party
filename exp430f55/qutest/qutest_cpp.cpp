@@ -1,40 +1,36 @@
-//! @file
-//! @brief QUTEST port for the MSP-EXP430F5529LP board
-//! @cond
 //============================================================================
-//! Last updated for version 6.8.0
-//! Last updated on  2020-01-13
-//!
-//!                    Q u a n t u m  L e a P s
-//!                    ------------------------
-//!                    Modern Embedded Software
-//!
-//! Copyright (C) 2005-2019 Quantum Leaps. All rights reserved.
-//!
-//! This program is open source software: you can redistribute it and/or
-//! modify it under the terms of the GNU General Public License as published
-//! by the Free Software Foundation, either version 3 of the License, or
-//! (at your option) any later version.
-//!
-//! Alternatively, this program may be distributed and modified under the
-//! terms of Quantum Leaps commercial licenses, which expressly supersede
-//! the GNU General Public License and are specifically designed for
-//! licensees interested in retaining the proprietary status of their code.
-//!
-//! This program is distributed in the hope that it will be useful,
-//! but WITHOUT ANY WARRANTY; without even the implied warranty of
-//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-//! GNU General Public License for more details.
-//!
-//! You should have received a copy of the GNU General Public License
-//! along with this program. If not, see <www.gnu.org/licenses>.
-//!
-//! Contact information:
-//! <www.state-machine.com/licensing>
-//! <info@state-machine.com>
+// Product: QUTEST port for the MSP-EXP430F5529LP board
+// Last updated for version 7.2.0
+// Last updated on  2022-12-15
+//
+//                    Q u a n t u m  L e a P s
+//                    ------------------------
+//                    Modern Embedded Software
+//
+// Copyright (C) 2005 Quantum Leaps. All rights reserved.
+//
+// This program is open source software: you can redistribute it and/or
+// modify it under the terms of the GNU General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Alternatively, this program may be distributed and modified under the
+// terms of Quantum Leaps commercial licenses, which expressly supersede
+// the GNU General Public License and are specifically designed for
+// licensees interested in retaining the proprietary status of their code.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <www.gnu.org/licenses>.
+//
+// Contact information:
+// <www.state-machine.com/licensing>
+// <info@state-machine.com>
 //============================================================================
-//! @endcond
-
 #ifndef Q_SPY
     #error "Q_SPY must be defined to compile qutest_port.cpp"
 #endif // Q_SPY
@@ -124,6 +120,12 @@ bool QS::onStartup(void const *arg) {
 }
 //............................................................................
 void QS::onCleanup(void) {
+    // wait as long as the UART is busy
+    while ((UCA1STAT & UCBUSY) != 0U) { // TX busy?
+    }
+    // delay before returning to allow all produced QS bytes to be received
+    for (std::uint32_t volatile dly_ctr = 1000U; dly_ctr > 0U; --dly_ctr) {
+    }
 }
 //............................................................................
 void QS::onFlush(void) {
