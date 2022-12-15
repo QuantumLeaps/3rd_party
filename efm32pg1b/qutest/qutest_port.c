@@ -163,8 +163,6 @@ void QS_onFlush(void) {
             break;
         }
     }
-    while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
-    }
 }
 /*..........................................................................*/
 /*! callback function to reset the target (to be implemented in the BSP) */
