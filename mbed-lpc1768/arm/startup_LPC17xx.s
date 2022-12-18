@@ -4,6 +4,10 @@
 ; * @version  CMSIS 4.3.0
 ; * @date     06 August 2015
 ; *
+; * Modified by Quantum Leaps:
+; * Added relocating of the Vector Table to free up the 256B region at 0x0
+; * for NULL-pointer protection by the MPU.
+; *
 ; * @description
 ; * Created from the CMSIS template for the specified device
 ; * Quantum Leaps, www.state-machine.com
@@ -85,7 +89,7 @@ __heap_limit
 ; Place code into the reset code section.
 ;
 ;******************************************************************************
-        AREA   RESET, DATA, READONLY
+        AREA   RESET, DATA, READONLY, ALIGN=8
         EXPORT  __Vectors
         EXPORT  __Vectors_End
         EXPORT  __Vectors_Size
@@ -96,22 +100,44 @@ __heap_limit
 ;
 ;******************************************************************************
 __Vectors
+    ; Initial Vector Table before relocation
         DCD     __initial_sp                ; Top of Stack
         DCD     Reset_Handler               ; Reset Handler
         DCD     NMI_Handler                 ; NMI Handler
         DCD     HardFault_Handler           ; Hard Fault Handler
-        DCD     MemManage_Handler           ; The MPU fault handler
-        DCD     BusFault_Handler            ; The bus fault handler
-        DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     MemManage_Handler           ; MPU fault handler
+        DCD     BusFault_Handler            ; Bus fault handler
+        DCD     UsageFault_Handler          ; Usage fault handler
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
-        DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
-        DCD     PendSV_Handler              ; The PendSV handler
-        DCD     SysTick_Handler             ; The SysTick handler
+        DCD     DebugMon_Handler            ; Debug Monitor handler
+        DCD     Default_Handler             ; Reserved
+        DCD     PendSV_Handler              ; PendSV handler
+        DCD     SysTick_Handler             ; SysTick handler
+        ALIGN  256  ; Extend the initial Vector Table to the 256B boundary
+
+    ; Relocated Vector Table beyond the 256B region around address 0.
+    ; That region is used for NULL-pointer protection by the MPU.
+__relocated_vector_table
+        DCD     __initial_sp                ; Top of Stack
+        DCD     Reset_Handler               ; Reset Handler
+        DCD     NMI_Handler                 ; NMI Handler
+        DCD     HardFault_Handler           ; Hard Fault Handler
+        DCD     MemManage_Handler           ; MPU fault handler
+        DCD     BusFault_Handler            ; Bus fault handler
+        DCD     UsageFault_Handler          ; Usage fault handler
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     SVC_Handler                 ; SVCall handler
+        DCD     DebugMon_Handler            ; Debug Monitor handler
+        DCD     Default_Handler             ; Reserved
+        DCD     PendSV_Handler              ; PendSV handler
+        DCD     SysTick_Handler             ; SysTick handler
 
         ; IRQ handlers...
         DCD     WDT_IRQHandler              ; WDT
@@ -154,7 +180,6 @@ __Vectors_End
 __Vectors_Size  EQU     __Vectors_End - __Vectors
 
 
-
 ;******************************************************************************
 ;
 ; This is the code for exception handlers.
@@ -172,6 +197,11 @@ Reset_Handler   PROC
         EXPORT  Reset_Handler  [WEAK]
         IMPORT  SystemInit
         IMPORT  __main
+
+        ; relocate the Vector Table
+        LDR     r0, =0xE000ED08 ; System Control Block/Vector Table Offset Reg
+        LDR     r1, =__relocated_vector_table
+        STR     r1,[r0]         ; SCB->VTOR := __relocated_vector_table
 
         LDR     r0, =SystemInit ; CMSIS system initialization
         BLX     r0
@@ -383,7 +413,6 @@ CANActivity_IRQHandler
 
 
 ;******************************************************************************
-;
 ; The function expected of the C library startup code for defining the stack
 ; and heap memory locations.  For the C library version of the startup code,
 ; provide this function so that the C library initialization code can find out
@@ -409,7 +438,6 @@ __user_initial_stackheap PROC
     ENDIF
 
 ;******************************************************************************
-;
 ; The function assert_failed defines the error/assertion handling policy
 ; for the application. After making sure that the stack is OK, this function
 ; calls Q_onAssert, which should NOT return (typically reset the CPU).
@@ -430,7 +458,6 @@ assert_failed PROC
         B      .                 ; should not be reached, but just in case...
 
         ENDP
-
 
         ALIGN                    ; make sure the end of this section is aligned
 

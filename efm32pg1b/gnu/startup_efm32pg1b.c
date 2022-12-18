@@ -4,6 +4,10 @@
  * Version: CMSIS 5.0.1
  * Date: 2017-09-13
  *
+ * Modified by Quantum Leaps:
+ * Added relocating of the Vector Table to free up the 256B region at 0x0
+ * for NULL-pointer protection by the MPU.
+ *
  * Created from the CMSIS template for the specified device
  * Quantum Leaps, www.state-machine.com
  *
@@ -108,13 +112,33 @@ void CRYOTIMER_IRQHandler  (void) __attribute__ ((weak, alias("Default_Handler")
 void FPUEH_IRQHandler      (void) __attribute__ ((weak, alias("Default_Handler")));
 
 /*..........................................................................*/
-/* The Vector Table is defined to have the size of 0x100 to ensure
-* that no other data or code will be placed up to address 0x100.
-* This might be necessary for NULL-pointer protection by the MPU,
-* where a protected region of 2^8 bytes spans over the Vector Table.
-*/
 __attribute__ ((section(".isr_vector")))
-int const g_pfnVectors[0x100/sizeof(int)] = {
+int const g_pfnVectors[] = {
+    /* Initial Vector Table before relocation */
+    (int)&__stack_end__,          /* Top of Stack                    */
+    (int)&Reset_Handler,          /* Reset Handler                   */
+    (int)&NMI_Handler,            /* NMI Handler                     */
+    (int)&HardFault_Handler,      /* Hard Fault Handler              */
+    (int)&MemManage_Handler,      /* The MPU fault handler           */
+    (int)&BusFault_Handler,       /* The bus fault handler           */
+    (int)&UsageFault_Handler,     /* The usage fault handler         */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&SVC_Handler,            /* SVCall handler                  */
+    (int)&DebugMon_Handler,       /* Debug monitor handler           */
+    (int)&Default_Handler,        /* Reserved                        */
+    (int)&PendSV_Handler,         /* The PendSV handler              */
+    (int)&SysTick_Handler,        /* The SysTick handler             */
+    /* pad the initial VT to the total size of 256B */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    /* Relocated Vector Table beyond the 256B region around address 0.
+    * That region is used for NULL-pointer protection by the MPU.
+    */
     (int)&__stack_end__,          /* Top of Stack                    */
     (int)&Reset_Handler,          /* Reset Handler                   */
     (int)&NMI_Handler,            /* NMI Handler                     */
@@ -171,6 +195,7 @@ int const g_pfnVectors[0x100/sizeof(int)] = {
 
 
 /* reset handler -----------------------------------------------------------*/
+__attribute__((naked)) void Reset_Handler(void);
 void Reset_Handler(void) {
     extern int main(void);
     extern int __libc_init_array(void);
@@ -181,13 +206,16 @@ void Reset_Handler(void) {
     extern unsigned __bss_end__;   /* end of .bss in the linker script */
     extern void software_init_hook(void) __attribute__((weak));
 
-    unsigned const *src;
-    unsigned *dst;
+    /* relocate the Vector Table to leave room for the NULL-pointer region
+    * System Control Block/Vector Table Offset Reg := relocated Vector Table
+    */
+    *(int const * volatile *)0xE000ED08 = &g_pfnVectors[256/sizeof(int)];
 
     SystemInit(); /* CMSIS system initialization */
 
     /* copy the data segment initializers from flash to RAM... */
-    src = &__data_load;
+    unsigned const *src = &__data_load;
+    unsigned *dst;
     for (dst = &__data_start; dst < &__data_end__; ++dst, ++src) {
         *dst = *src;
     }
@@ -292,8 +320,8 @@ __asm volatile (
 __attribute__ ((naked, noreturn))
 void assert_failed(char const *module, int loc) {
     /* re-set the SP in case of stack overflow */
-    __asm volatile ("  MOV sp,%0" : : "r" (&__stack_end__));
-    Q_onAssert(module, loc);
-    for (;;) {
+    __asm volatile ("  MOV  sp,%0" : : "r" (&__stack_end__));
+    Q_onAssert(module, loc); /* call the application-specific QP handler */
+    for (;;) { /* should not be reached, but just in case loop forever... */
     }
 }

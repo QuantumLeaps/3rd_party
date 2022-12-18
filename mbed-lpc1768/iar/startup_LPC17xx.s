@@ -4,6 +4,10 @@
 ; * @version  CMSIS 5.5.1
 ; * @date     13 May 2019
 ; *
+; * Modified by Quantum Leaps:
+; * Added relocating of the Vector Table to free up the 256B region at 0x0
+; * for NULL-pointer protection by the MPU.
+; *
 ; * @description
 ; * Created from the CMSIS template for the specified device
 ; * Quantum Leaps, www.state-machine.com
@@ -48,7 +52,7 @@
         ;; Forward declaration of sections.
         SECTION CSTACK:DATA:NOROOT(3)
 
-        SECTION .intvec:CODE:NOROOT(2)
+        SECTION .intvec:CODE:NOROOT(8)
 
         PUBLIC  __vector_table
         PUBLIC  __Vectors
@@ -60,6 +64,7 @@
 ;;
         DATA
 __vector_table
+    ; Initial Vector Table before relocation
         DCD     sfe(CSTACK)
         DCD     Reset_Handler               ; Reset Handler
         DCD     NMI_Handler                 ; NMI Handler
@@ -67,13 +72,34 @@ __vector_table
         DCD     MemManage_Handler           ; The MPU fault handler
         DCD     BusFault_Handler            ; The bus fault handler
         DCD     UsageFault_Handler          ; The usage fault handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
         DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     PendSV_Handler              ; The PendSV handler
+        DCD     SysTick_Handler             ; The SysTick handler
+        ALIGNROM 8   ; Extend the initial Vector Table to the 2^8==256B
+
+    ; Relocated Vector Table beyond the 256B region around address 0.
+    ; That region is used for NULL-pointer protection by the MPU.
+__relocated_vector_table
+        DCD     sfe(CSTACK)
+        DCD     Reset_Handler               ; Reset Handler
+        DCD     NMI_Handler                 ; NMI Handler
+        DCD     HardFault_Handler           ; Hard Fault Handler
+        DCD     MemManage_Handler           ; The MPU fault handler
+        DCD     BusFault_Handler            ; The bus fault handler
+        DCD     UsageFault_Handler          ; The usage fault handler
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     SVC_Handler                 ; SVCall handler
+        DCD     DebugMon_Handler            ; Debug monitor handler
+        DCD     Default_Handler             ; Reserved
         DCD     PendSV_Handler              ; The PendSV handler
         DCD     SysTick_Handler             ; The SysTick handler
 
@@ -130,7 +156,24 @@ __Vectors_Size  EQU   __Vectors_End - __Vectors
         EXTERN  SystemInit
         EXTERN  __iar_program_start
 Reset_Handler
+
+        ; relocate the Vector Table
+        LDR     r0, =0xE000ED08 ; System Control Block/Vector Table Offset Reg
+        LDR     r1, =__relocated_vector_table
+        STR     r1,[r0]         ; SCB->VTOR := __Vector_Table
+
         BL      SystemInit  ; CMSIS system initialization
+
+        ; pre-fill the CSTACK with 0xDEADBEEF...................
+        LDR     r0,=0xDEADBEEF
+        MOV     r1,r0
+        LDR     r2,=sfb(CSTACK)
+        LDR     r3,=sfe(CSTACK)
+Reset_stackInit_fill:
+        STMIA   r2!,{r0,r1}
+        CMP     r2,r3
+        BLT.N   Reset_stackInit_fill
+
         BL      __iar_program_start ; IAR startup code
 ;.............................................................................
         PUBWEAK NMI_Handler
@@ -321,7 +364,6 @@ assert_failed
         BL     Q_onAssert        ; call the application-specific handler
 
         B      .                 ; should not be reached, but just in case...
-
 
         END                      ; end of module
 
