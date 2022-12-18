@@ -267,6 +267,7 @@ str_SysTick
 ; Weak IRQ handlers...
 ;
 
+        PUBWEAK  Default_Handler
         PUBWEAK  WDT_IRQHandler
         PUBWEAK  TIMER0_IRQHandler
         PUBWEAK  TIMER1_IRQHandler
@@ -303,6 +304,7 @@ str_SysTick
         PUBWEAK  USBActivity_IRQHandler
         PUBWEAK  CANActivity_IRQHandler
 
+Default_Handler
 WDT_IRQHandler
 TIMER0_IRQHandler
 TIMER1_IRQHandler
