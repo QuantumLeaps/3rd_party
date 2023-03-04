@@ -1,77 +1,55 @@
-;*****************************************************************************
-; Modified from the original as follows:
-; - removed Stack_Size and Heap_Size EQUs, so that they need to be provided
-;   externally in command-line options to the assembler without messing up
-;   with this file
-; - replaced endless loops in exception handlers (denial of service) with
-;   branches to assert_failed
-; - provided definitions of assert_failed and Q_onAssert
+;/***************************************************************************/
+; @file     startup_stm32l1xx.s for ARM-KEIL ARM assembler
+; @brief    CMSIS Cortex-M0+ Core Device Startup File for STM32L053xx
+; @version  CMSIS 5.9.0
+; @date     1 Feb 2023
 ;
+; Modified by Quantum Leaps:
+; - Added relocating of the Vector Table to free up the 256B region at 0x0
+;   for NULL-pointer protection by the MPU.
+; - Modified all exception handlers to branch to assert_failed()
+;   instead of locking up the CPU inside an endless loop.
 ;
-; Quantum Leaps, LLC; www.state-machine.com
-; 2015-08-26
-;******************** (C) COPYRIGHT 2014 STMicroelectronics ********************
-;* File Name          : startup_stm32l1xx_hd.s
-;* Author             : MCD Application Team
-;* Version            : V1.3.0
-;* Date               : 31-January-2014
-;* Description        : STM32L1xx Ultra Low Power High-density Devices vector
-;*                      table for MDK-ARM toolchain.
-;*                      This module performs:
-;*                      - Set the initial SP
-;*                      - Set the initial PC == Reset_Handler
-;*                      - Set the vector table entries with the exceptions ISR address
-;*                      - Branches to __main in the C library (which eventually
-;*                        calls main()).
-;*                      After Reset the CortexM3 processor is in Thread mode,
-;*                      priority is Privileged, and the Stack is set to Main.
-;* <<< Use Configuration Wizard in Context Menu >>>
-;*******************************************************************************
+; @description
+; Created from the CMSIS template for the specified device
+; Quantum Leaps, www.state-machine.com
 ;
-; Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-; You may not use this file except in compliance with the License.
-; You may obtain a copy of the License at:
-;
-;        http://www.st.com/software_license_agreement_liberty_v2
-;
-; Unless required by applicable law or agreed to in writing, software
-; distributed under the License is distributed on an "AS IS" BASIS,
-; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-; See the License for the specific language governing permissions and
-; limitations under the License.
-;
-;*******************************************************************************
+; @note
+; The symbols Stack_Size and Heap_Size should be provided on the command-
+; line options to the assembler, for example as:
+;     --pd "Stack_Size SETA 1024" --pd "Heap_Size SETA 0"
 
-; Amount of memory (in bytes) allocated for Stack
-; Tailor this value to your application needs
-; <h> Stack Configuration
-;   <o> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
-; </h>
 
-; QL commeted out: Stack_Size      EQU     0x00000400
-
-                AREA    STACK, NOINIT, READWRITE, ALIGN=3
-Stack_Mem       SPACE   Stack_Size
+;******************************************************************************
+; Allocate space for the stack.
+;
+        AREA    STACK, NOINIT, READWRITE, ALIGN=3
+__stack_base
+        EXPORT  __stack_base
+StackMem
+        SPACE   Stack_Size    ; provided in command-line option, for example:
+                              ; --pd "Stack_Size SETA 512"
+__stack_limit
 __initial_sp
 
-
-; <h> Heap Configuration
-;   <o>  Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
-; </h>
-
-; QL commeted out: Heap_Size       EQU     0x00000200
-
-                AREA    HEAP, NOINIT, READWRITE, ALIGN=3
+;******************************************************************************
+; Allocate space for the heap.
+;
+        AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
-Heap_Mem        SPACE   Heap_Size
+HeapMem
+        SPACE   Heap_Size     ; provided in command-line option, for example:
+                              ; --pd "Heap_Size SETA 0"
 __heap_limit
 
+; Indicate that the code in this file preserves 8-byte alignment of the stack.
         PRESERVE8
-        THUMB
 
-
-; Vector Table Mapped to Address 0 at Reset
-        AREA    RESET, DATA, READONLY
+;******************************************************************************
+; The vector table.
+;
+; Place code into the reset code section.
+        AREA   RESET, DATA, READONLY, ALIGN=8
         EXPORT  __Vectors
         EXPORT  __Vectors_End
         EXPORT  __Vectors_Size
@@ -84,13 +62,13 @@ __Vectors
         DCD     MemManage_Handler         ; MPU Fault Handler
         DCD     BusFault_Handler          ; Bus Fault Handler
         DCD     UsageFault_Handler        ; Usage Fault Handler
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
+        DCD     Default_Handler           ; Reserved
+        DCD     Default_Handler           ; Reserved
+        DCD     Default_Handler           ; Reserved
+        DCD     Default_Handler           ; Reserved
         DCD     SVC_Handler               ; SVCall Handler
         DCD     DebugMon_Handler          ; Debug Monitor Handler
-        DCD     0                         ; Reserved
+        DCD     Default_Handler           ; Reserved
         DCD     PendSV_Handler            ; PendSV Handler
         DCD     SysTick_Handler           ; SysTick Handler
 
@@ -155,144 +133,190 @@ __Vectors
 
 __Vectors_End
 
-__Vectors_Size  EQU  __Vectors_End - __Vectors
+__Vectors_Size  EQU   __Vectors_End - __Vectors
 
-                AREA    |.text|, CODE, READONLY
 
 ;******************************************************************************
+; This is the code for exception handlers.
 ;
-; The Reset handler
-;
+        AREA    |.text|, CODE, READONLY
+
 ;******************************************************************************
-Reset_Handler    PROC
-                 EXPORT  Reset_Handler             [WEAK]
-        IMPORT  __main
+; This is the code that gets called when the processor first starts execution
+; following a reset event.
+;
+Reset_Handler   PROC
+        EXPORT  Reset_Handler   [WEAK]
         IMPORT  SystemInit
-        LDR     R0, =SystemInit
-        BLX     R0
-        LDR     R0, =__main
-        BX      R0
+        IMPORT  __main
+        IMPORT  assert_failed
 
-        MOVS    r0,#0
-        MOVS    r1,#0       ; error number
-        B       assert_failed ; __main should not return, but assert if it does
+        LDR     r0,=SystemInit  ; CMSIS system initialization
+        BLX     r0
+
+        ; Call the C library enty point that handles startup. This will copy
+        ; the .data section initializers from flash to SRAM and zero fill the
+        ; .bss section.
+        ; NOTE: The __main function clears the C stack as well
+        LDR     r0,=__main
+        BX      r0
+
+        ; __main calls the main() function, which should not return,
+        ; but just in case jump to assert_failed() if main returns.
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_EXIT
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_EXIT
+        DCB     "EXIT"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The NMI handler
-;
 ;******************************************************************************
 NMI_Handler     PROC
         EXPORT  NMI_Handler     [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#2       ; NMI exception number
-        B       assert_failed
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_NMI
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_NMI
+        DCB     "NMI"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The Hard Fault handler
-;
 ;******************************************************************************
 HardFault_Handler PROC
         EXPORT  HardFault_Handler [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#3       ; HardFault exception number
-        B       assert_failed
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_HardFault
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_HardFault
+        DCB     "HardFault"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The MPU fault handler
-;
 ;******************************************************************************
 MemManage_Handler PROC
-        EXPORT  MemManage_Handler     [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#4       ; MemManage exception number
-        B       assert_failed
+        EXPORT  MemManage_Handler [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_MemManage
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_MemManage
+        DCB     "MemManage"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The Bus Fault handler
-;
 ;******************************************************************************
 BusFault_Handler PROC
-        EXPORT  BusFault_Handler     [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#5       ; BusFault exception number
-        B       assert_failed
+        EXPORT  BusFault_Handler  [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_BusFault
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_BusFault
+        DCB     "BusFault"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The Usage Fault handler
-;
 ;******************************************************************************
 UsageFault_Handler PROC
-        EXPORT  UsageFault_Handler   [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#6       ; UsageFault exception number
-        B       assert_failed
+        EXPORT  UsageFault_Handler [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_UsageFault
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_UsageFault
+        DCB     "UsageFault"
+        ALIGN
         ENDP
 
 ;******************************************************************************
 ;
-; The SVC handler
+; Weak non-fault handlers...
 ;
+
 ;******************************************************************************
 SVC_Handler PROC
-        EXPORT  SVC_Handler   [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#11      ; SVCall exception number
-        B       assert_failed
+        EXPORT  SVC_Handler       [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_SVC
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_SVC
+        DCB     "SVC"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The Debug Monitor handler
-;
 ;******************************************************************************
 DebugMon_Handler PROC
-        EXPORT  DebugMon_Handler     [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#12      ; DebugMon exception number
-        B       assert_failed
+        EXPORT  DebugMon_Handler  [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_DebugMon
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_DebugMon
+        DCB     "DebugMon"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The PendSV handler
-;
 ;******************************************************************************
 PendSV_Handler PROC
-        EXPORT  PendSV_Handler       [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#14      ; PendSV exception number
-        B       assert_failed
+        EXPORT  PendSV_Handler    [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_PendSV
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_PendSV
+        DCB     "PendSV"
+        ALIGN
         ENDP
 
-;******************************************************************************
-;
-; The SysTick handler
-;
 ;******************************************************************************
 SysTick_Handler PROC
-        EXPORT  SysTick_Handler     [WEAK]
-        MOVS    r0,#0
-        MOVS    r1,#15      ; SysTick exception number
-        B       assert_failed
+        EXPORT  SysTick_Handler   [WEAK]
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_SysTick
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_SysTick
+        DCB     "SysTick"
+        ALIGN
         ENDP
 
 ;******************************************************************************
-;
-; Define Default_Handledr as dummy for all IRQ handlers
-;
-;******************************************************************************
 Default_Handler PROC
-
         EXPORT  WWDG_IRQHandler            [WEAK]
         EXPORT  PVD_IRQHandler             [WEAK]
         EXPORT  TAMPER_STAMP_IRQHandler    [WEAK]
@@ -408,62 +432,44 @@ DMA2_Channel4_IRQHandler
 DMA2_Channel5_IRQHandler
 AES_IRQHandler
 COMP_ACQ_IRQHandler
-        MOVS    r0,#0
-        MOVS    r1,#-1      ; 0xFFFFFFF
-        B       assert_failed
-        ENDP
-
+        CPSID   i                 ; disable all interrupts
+        LDR     r0,=str_Undefined
+        MOVS    r1,#1
+        LDR     r2,=__initial_sp  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_Undefined
+        DCB     "Undefined"
         ALIGN
-
-;*******************************************************************************
-; User Stack and Heap initialization
-;*******************************************************************************
-        IF      :DEF:__MICROLIB
-
-            EXPORT  __initial_sp
-            EXPORT  __heap_base
-            EXPORT  __heap_limit
-
-            ELSE
-
-            IMPORT  __use_two_region_memory
-            EXPORT  __user_initial_stackheap
-
-__user_initial_stackheap
-
-            LDR     R0, =  Heap_Mem
-            LDR     R1, =(Stack_Mem + Stack_Size)
-            LDR     R2, = (Heap_Mem +  Heap_Size)
-            LDR     R3, = Stack_Mem
-            BX      LR
-
-            ALIGN
-
-        ENDIF
-
-;******************************************************************************
-;
-; The function assert_failed defines the error/assertion handling policy
-; for the application. After making sure that the stack is OK, this function
-; calls Q_onAssert, which should NOT return (typically reset the CPU).
-;
-; NOTE: the function Q_onAssert should NOT return.
-;
-; The C proptotype of the assert_failed() and Q_onAssert() functions are:
-; void assert_failed(char const *file, int line);
-; void Q_onAssert   (char const *file, int line);
-;******************************************************************************
-        EXPORT  assert_failed
-        IMPORT  Q_onAssert
-assert_failed PROC
-
-        LDR    sp,=__initial_sp  ; re-set the SP in case of stack overflow
-        BL     Q_onAssert        ; call the application-specific handler
-
-        B      .                 ; should not be reached, but just in case...
-
         ENDP
 
-        ALIGN                    ; make sure the end of this section is aligned
+        ALIGN               ; make sure the end of this section is aligned
 
-        END                      ; end of module
+;******************************************************************************
+; The function expected of the C library startup code for defining the stack
+; and heap memory locations.  For the C library version of the startup code,
+; provide this function so that the C library initialization code can find out
+; the location of the stack and heap.
+;
+    IF :DEF: __MICROLIB
+        EXPORT  __initial_sp
+        EXPORT  __stack_limit
+        EXPORT  __heap_base
+        EXPORT  __heap_limit
+    ELSE
+        IMPORT  __use_two_region_memory
+        EXPORT  __user_initial_stackheap
+
+__user_initial_stackheap PROC
+        LDR     R0, =__heap_base
+        LDR     R1, =__stack_limit
+        LDR     R2, =__heap_limit
+        LDR     R3, =__stack_base
+        BX      LR
+        ENDP
+    ENDIF
+        ALIGN               ; make sure the end of this section is aligned
+
+    END                     ; end of module
+

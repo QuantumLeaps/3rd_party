@@ -1,8 +1,14 @@
 /* File: startup_stm32l053xx.c for GNU-ARM
- * Purpose: startup file for LM3S6965 Cortex-M3 device.
+ * Purpose: startup file for STM32L053xx Cortex-M0+ device.
  *          Should be used with GCC 'GNU Tools ARM Embedded'
-* Version: CMSIS 5.0.1
+ * Version: CMSIS 5.0.1
  * Date: 2017-09-13
+ *
+ * Modified by Quantum Leaps:
+ * - Added relocating of the Vector Table to free up the 256B region at 0x0
+ *   for NULL-pointer protection by the MPU.
+ * - Modified all exception handlers to branch to assert_failed()
+ *   instead of locking up the CPU inside an endless loop.
  *
  * Created from the CMSIS template for the specified device
  * Quantum Leaps, www.state-machine.com
@@ -14,32 +20,6 @@
  * assembly to re-set the stack pointer, in case it is corrupted by the
  * time assert_failed is called.
  */
-/* Copyright (c) 2011 - 2014 ARM LIMITED
-
-   All rights reserved.
-   Redistribution and use in source and binary forms, with or without
-   modification, are permitted provided that the following conditions are met:
-   - Redistributions of source code must retain the above copyright
-     notice, this list of conditions and the following disclaimer.
-   - Redistributions in binary form must reproduce the above copyright
-     notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
-   - Neither the name of ARM nor the names of its contributors may be used
-     to endorse or promote products derived from this software without
-     specific prior written permission.
-   *
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-   ARE DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDERS AND CONTRIBUTORS BE
-   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-   POSSIBILITY OF SUCH DAMAGE.
- ---------------------------------------------------------------------------*/
 
 /* start and end of stack defined in the linker script ---------------------*/
 /*extern int __stack_start__;*/
@@ -61,8 +41,6 @@ void assert_failed(char const *module, int loc);
 void Default_Handler(void);  /* Default empty handler */
 void Reset_Handler(void);    /* Reset Handler */
 void SystemInit(void);       /* CMSIS system initialization */
-__attribute__ ((noreturn))
-void Q_onAssert(char const *module, int loc); /* QP assertion handler */
 
 /*----------------------------------------------------------------------------
 * weak aliases for each Exception handler to the Default_Handler.
@@ -109,7 +87,11 @@ void USART2_IRQHandler     (void) __attribute__ ((weak, alias("Default_Handler")
 void RNG_LPUART1_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler")));
 void LCD_IRQHandler        (void) __attribute__ ((weak, alias("Default_Handler")));
 void USB_IRQHandler        (void) __attribute__ ((weak, alias("Default_Handler")));
-
+void Reserved14_IRQHandler (void) __attribute__ ((weak, alias("Default_Handler")));
+void Reserved16_IRQHandler (void) __attribute__ ((weak, alias("Default_Handler")));
+void Reserved18_IRQHandler (void) __attribute__ ((weak, alias("Default_Handler")));
+void Reserved19_IRQHandler (void) __attribute__ ((weak, alias("Default_Handler")));
+void Reserved21_IRQHandler (void) __attribute__ ((weak, alias("Default_Handler")));
 
 /*..........................................................................*/
 __attribute__ ((section(".isr_vector")))
@@ -118,54 +100,53 @@ int const g_pfnVectors[] = {
     (int)&Reset_Handler,          /* Reset Handler                  */
     (int)&NMI_Handler,            /* NMI Handler                    */
     (int)&HardFault_Handler,      /* Hard Fault Handler             */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                       */
+    (int)&Default_Handler,        /* Reserved                       */
     (int)&SVC_Handler,            /* SVCall handler                 */
     (int)&DebugMon_Handler,       /* Debug monitor handler          */
-    (int)&Default_Handler,        /* Reserved                        */
+    (int)&Default_Handler,        /* Reserved                       */
     (int)&PendSV_Handler,         /* The PendSV handler             */
     (int)&SysTick_Handler,        /* The SysTick handler            */
 
     /*IRQ handlers... */
-    (int)&WWDG_IRQHandler,        /* Window Watchdog                */
-    (int)&PVD_IRQHandler,         /* PVD through EXTI Line detect   */
-    (int)&RTC_IRQHandler,         /* RTC through EXTI Line          */
-    (int)&FLASH_IRQHandler,       /* FLASH                          */
-    (int)&RCC_CRS_IRQHandler,     /* RCC and CRS                    */
-    (int)&EXTI0_1_IRQHandler,     /* EXTI Line 0 and 1              */
-    (int)&EXTI2_3_IRQHandler,     /* EXTI Line 2 and 3              */
-    (int)&EXTI4_15_IRQHandler,    /* EXTI Line 4 to 15              */
-    (int)&TSC_IRQHandler,         /* TSC                            */
-    (int)&DMA1_Channel1_IRQHandler,       /* DMA1 Channel 1               */
-    (int)&DMA1_Channel2_3_IRQHandler,     /* DMA1 Channel 2 and Channel 3 */
-    (int)&DMA1_Channel4_5_6_7_IRQHandler, /* DMA1 Channel 4, 5, 6 and 7   */
-    (int)&ADC1_COMP_IRQHandler,   /* ADC1, COMP1 and COMP2          */
-    (int)&LPTIM1_IRQHandler,      /* LPTIM1                         */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&TIM2_IRQHandler,        /* TIM2                           */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&TIM6_DAC_IRQHandler,    /* TIM6 and DAC                   */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&TIM21_IRQHandler,       /* TIM21                          */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&TIM22_IRQHandler,       /* TIM22                          */
-    (int)&I2C1_IRQHandler,        /* I2C1                           */
-    (int)&I2C2_IRQHandler,        /* I2C2                           */
-    (int)&SPI1_IRQHandler,        /* SPI1                           */
-    (int)&SPI2_IRQHandler,        /* SPI2                           */
-    (int)&USART1_IRQHandler,      /* USART1                         */
-    (int)&USART2_IRQHandler,      /* USART2                         */
-    (int)&RNG_LPUART1_IRQHandler, /* RNG and LPUART1                */
-    (int)&LCD_IRQHandler,         /* LCD                            */
-    (int)&USB_IRQHandler,         /* USB                            */
+    (int)&WWDG_IRQHandler,        /* [ 0] Window Watchdog                */
+    (int)&PVD_IRQHandler,         /* [ 1] PVD through EXTI Line detect   */
+    (int)&RTC_IRQHandler,         /* [ 2] RTC through EXTI Line          */
+    (int)&FLASH_IRQHandler,       /* [ 3] FLASH                          */
+    (int)&RCC_CRS_IRQHandler,     /* [ 4] RCC and CRS                    */
+    (int)&EXTI0_1_IRQHandler,     /* [ 5] EXTI Line 0 and 1              */
+    (int)&EXTI2_3_IRQHandler,     /* [ 6] EXTI Line 2 and 3              */
+    (int)&EXTI4_15_IRQHandler,    /* [ 7] EXTI Line 4 to 15              */
+    (int)&TSC_IRQHandler,         /* [ 8] TSC                            */
+    (int)&DMA1_Channel1_IRQHandler,  /* [ 9] DMA1 Channel 1              */
+    (int)&DMA1_Channel2_3_IRQHandler,/* [10] DMA1 Channel 2 and Channel 3 */
+    (int)&DMA1_Channel4_5_6_7_IRQHandler, /* [11] DMA1 Channel 4, 5, 6 and 7   */
+    (int)&ADC1_COMP_IRQHandler,   /* [12] ADC1, COMP1 and COMP2          */
+    (int)&LPTIM1_IRQHandler,      /* [13] LPTIM1                         */
+    (int)&Reserved14_IRQHandler,  /* [14] Reserved                       */
+    (int)&TIM2_IRQHandler,        /* [15] TIM2                           */
+    (int)&Reserved16_IRQHandler,  /* [16] Reserved                       */
+    (int)&TIM6_DAC_IRQHandler,    /* [17] TIM6 and DAC                   */
+    (int)&Reserved18_IRQHandler,  /* [18] Reserved                       */
+    (int)&Reserved19_IRQHandler,  /* [19] Reserved                       */
+    (int)&TIM21_IRQHandler,       /* [20] TIM21                          */
+    (int)&Reserved21_IRQHandler,  /* [21] Reserved                       */
+    (int)&TIM22_IRQHandler,       /* [22] TIM22                          */
+    (int)&I2C1_IRQHandler,        /* [23] I2C1                           */
+    (int)&I2C2_IRQHandler,        /* [24] I2C2                           */
+    (int)&SPI1_IRQHandler,        /* [25] SPI1                           */
+    (int)&SPI2_IRQHandler,        /* [26] SPI2                           */
+    (int)&USART1_IRQHandler,      /* [27] USART1                         */
+    (int)&USART2_IRQHandler,      /* [28] USART2                         */
+    (int)&RNG_LPUART1_IRQHandler, /* [29] RNG and LPUART1                */
+    (int)&LCD_IRQHandler,         /* [30] LCD                            */
+    (int)&USB_IRQHandler,         /* [31] USB                            */
 };
-
 
 /* reset handler -----------------------------------------------------------*/
 __attribute__((naked)) void Reset_Handler(void);
@@ -179,13 +160,11 @@ void Reset_Handler(void) {
     extern unsigned __bss_end__;   /* end of .bss in the linker script */
     extern void software_init_hook(void) __attribute__((weak));
 
-    unsigned const *src;
-    unsigned *dst;
-
     SystemInit(); /* CMSIS system initialization */
 
     /* copy the data segment initializers from flash to RAM... */
-    src = &__data_load;
+    unsigned const *src = &__data_load;
+    unsigned *dst;
     for (dst = &__data_start; dst < &__data_end__; ++dst, ++src) {
         *dst = *src;
     }
@@ -207,91 +186,28 @@ void Reset_Handler(void) {
     }
 
     /* the previous code should not return, but assert just in case... */
-    assert_failed("Reset_Handler", __LINE__);
+    __asm volatile ("  CPSID i");
+    assert_failed("Reset_Handler", 1U);
 }
-
 
 /* fault exception handlers ------------------------------------------------*/
 __attribute__((naked)) void NMI_Handler(void);
 void NMI_Handler(void) {
-__asm volatile (
-    "    ldr  r0,=str_nmi       \n"
-    "    mov  r1,#1             \n"
-    "    b assert_failed        \n"
-    "str_nmi: .asciz \"NMI\"    \n"
-    "  .align 2                 \n"
-);
-}
-/*..........................................................................*/
-__attribute__((naked)) void MemManage_Handler(void);
-void MemManage_Handler(void) {
-__asm volatile (
-    "    ldr  r0,=str_mem       \n"
-    "    mov  r1,#1             \n"
-    "    b    assert_failed     \n"
-    "str_mem: .asciz \"MemManage\"\n"
-    "  .align 2                 \n"
-);
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("NMI", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void HardFault_Handler(void);
 void HardFault_Handler(void) {
-__asm volatile (
-    "    ldr  r0,=str_hrd       \n"
-    "    mov  r1,#1             \n"
-    "    b    assert_failed     \n"
-    "str_hrd: .asciz \"HardFault\"\n"
-    "  .align 2                 \n"
-);
-}
-/*..........................................................................*/
-__attribute__((naked)) void BusFault_Handler(void);
-void BusFault_Handler(void) {
-__asm volatile (
-    "    ldr  r0,=str_bus       \n"
-    "    mov  r1,#1             \n"
-    "    b    assert_failed     \n"
-    "str_bus: .asciz \"BusFault\"\n"
-    "  .align 2                 \n"
-);
-}
-/*..........................................................................*/
-__attribute__((naked)) void UsageFault_Handler(void);
-void UsageFault_Handler(void) {
-__asm volatile (
-    "    ldr  r0,=str_usage     \n"
-    "    mov  r1,#1             \n"
-    "    b    assert_failed     \n"
-    "str_usage: .asciz \"UsageFault\"\n"
-    "  .align 2                 \n"
-);
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("HardFault", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void Default_Handler(void);
 void Default_Handler(void) {
-__asm volatile (
-    "    ldr  r0,=str_dflt      \n"
-    "    mov  r1,#1             \n"
-    "    b    assert_failed     \n"
-    "str_dflt: .asciz \"Default\"\n"
-    "  .align 2                 \n"
-);
-}
-
-/*--------------------------------------------------------------------------*/
-/* The function assert_failed() provides a low-level handler for assertion
-* failures. It ultimately transfers control to Q_onAssert(), which defines
-* the error/assertion handling policy for the application.
-*
-* assert_failed() re-sets the stack pointer (MSP) to the original setting.
-* This is necessary to avoid cascading exceptions in case the stack was
-* OVERFLOWN.
-*/
-__attribute__ ((naked, noreturn))
-void assert_failed(char const *module, int loc) {
-    /* re-set the SP in case of stack overflow */
-    __asm volatile ("  MOV sp,%0" : : "r" (&__stack_end__));
-    Q_onAssert(module, loc); /* call the app-specific handler */
-    for (;;) {
-    }
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("Default", 1U);
 }

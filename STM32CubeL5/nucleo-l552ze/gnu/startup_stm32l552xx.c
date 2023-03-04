@@ -1,8 +1,14 @@
-/* File: startup_stm32l552xx.c
- * Purpose: startup file for STM32H74xx devices
+/* File: startup_stm32l552xx.c for GNU-ARM
+ * Purpose: startup file for stm32l552xx Cortex-M33 device.
  *          Should be used with GCC 'GNU Tools ARM Embedded'
- * Version: CMSIS 5.x
- * Date:    2022-02-26
+ * Version: CMSIS 5.0.1
+ * Date: 2017-09-13
+ *
+ * Modified by Quantum Leaps:
+ * - Added relocating of the Vector Table to free up the 256B region at 0x0
+ *   for NULL-pointer protection by the MPU.
+ * - Modified all exception handlers to branch to assert_failed()
+ *   instead of locking up the CPU inside an endless loop.
  *
  * Created from the CMSIS template for the specified device
  * Quantum Leaps, www.state-machine.com
@@ -35,26 +41,24 @@ void assert_failed(char const *module, int loc);
 void Default_Handler(void);  /* Default empty handler */
 void Reset_Handler(void);    /* Reset Handler */
 void SystemInit(void);       /* CMSIS system initialization */
-__attribute__ ((noreturn))
-void Q_onAssert(char const *module, int loc); /* QP assertion handler */
 
 /*----------------------------------------------------------------------------
 * weak aliases for each Exception handler to the Default_Handler.
 * Any function with the same name will override these definitions.
 */
 /* Cortex-M Processor fault exceptions... */
-void NMI_Handler             (void) __attribute__ ((weak));
-void HardFault_Handler       (void) __attribute__ ((weak));
-void MemManage_Handler       (void) __attribute__ ((weak));
-void BusFault_Handler        (void) __attribute__ ((weak));
-void UsageFault_Handler      (void) __attribute__ ((weak));
-void SecureFault_Handler     (void) __attribute__ ((weak));
+void NMI_Handler           (void) __attribute__ ((weak));
+void HardFault_Handler     (void) __attribute__ ((weak));
+void MemManage_Handler     (void) __attribute__ ((weak));
+void BusFault_Handler      (void) __attribute__ ((weak));
+void UsageFault_Handler    (void) __attribute__ ((weak));
+void SecureFault_Handler   (void) __attribute__ ((weak));
 
 /* Cortex-M Processor non-fault exceptions... */
-void SVC_Handler             (void) __attribute__ ((weak, alias("Default_Handler")));
-void DebugMon_Handler        (void) __attribute__ ((weak, alias("Default_Handler")));
-void PendSV_Handler          (void) __attribute__ ((weak, alias("Default_Handler")));
-void SysTick_Handler         (void) __attribute__ ((weak, alias("Default_Handler")));
+void SVC_Handler           (void) __attribute__ ((weak, alias("Default_Handler")));
+void DebugMon_Handler      (void) __attribute__ ((weak, alias("Default_Handler")));
+void PendSV_Handler        (void) __attribute__ ((weak, alias("Default_Handler")));
+void SysTick_Handler       (void) __attribute__ ((weak, alias("Default_Handler")));
 
 /* external interrupts...   */
 void WWDG_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler")));
@@ -173,12 +177,12 @@ int const g_pfnVectors[] = {
     (int)&BusFault_Handler,         /* The bus fault handler               */
     (int)&UsageFault_Handler,       /* The usage fault handler             */
     (int)&SecureFault_Handler,      /* Secure Fault Handler                */
-    (int)0,                         /* Reserved                            */
-    (int)0,                         /* Reserved                            */
-    (int)0,                         /* Reserved                            */
+    (int)&Default_Handler,          /* Reserved                            */
+    (int)&Default_Handler,          /* Reserved                            */
+    (int)&Default_Handler,          /* Reserved                            */
     (int)&SVC_Handler,              /* SVCall handler                      */
     (int)&DebugMon_Handler,         /* Debug monitor handler               */
-    (int)0,                         /* Reserved                            */
+    (int)&Default_Handler,          /* Reserved                            */
     (int)&PendSV_Handler,           /* The PendSV handler                  */
     (int)&SysTick_Handler,          /* The SysTick handler                 */
 
@@ -305,13 +309,11 @@ void Reset_Handler(void) {
     extern unsigned __bss_end__;   /* end of .bss in the linker script */
     extern void software_init_hook(void) __attribute__((weak));
 
-    unsigned const *src;
-    unsigned *dst;
-
     SystemInit(); /* CMSIS system initialization */
 
     /* copy the data segment initializers from flash to RAM... */
-    src = &__data_load;
+    unsigned const *src = &__data_load;
+    unsigned *dst;
     for (dst = &__data_start; dst < &__data_end__; ++dst, ++src) {
         *dst = *src;
     }
@@ -333,107 +335,56 @@ void Reset_Handler(void) {
     }
 
     /* the previous code should not return, but assert just in case... */
-    assert_failed("Reset_Handler", __LINE__);
+    __asm volatile ("  CPSID i");
+    assert_failed("Reset_Handler", 1U);
 }
-
 
 /* fault exception handlers ------------------------------------------------*/
 __attribute__((naked)) void NMI_Handler(void);
 void NMI_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_nmi\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_nmi: .asciz \"NMI\"\n\t"
-        "  .align 2\n\t"
-    );
-}
-/*..........................................................................*/
-__attribute__((naked)) void MemManage_Handler(void);
-void MemManage_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_mem\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_mem: .asciz \"MemManage\"\n\t"
-        "  .align 2\n\t"
-    );
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("NMI", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void HardFault_Handler(void);
 void HardFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_hrd\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_hrd: .asciz \"HardFault\"\n\t"
-        "  .align 2\n\t"
-    );
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("HardFault", 1U);
+}
+/*..........................................................................*/
+__attribute__((naked)) void MemManage_Handler(void);
+void MemManage_Handler(void) {
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("MemManage", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void BusFault_Handler(void);
 void BusFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_bus\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_bus: .asciz \"BusFault\"\n\t"
-        "  .align 2\n\t"
-    );
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("BusFault", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void UsageFault_Handler(void);
 void UsageFault_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_usage\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_usage: .asciz \"UsageFault\"\n\t"
-        "  .align 2\n\t"
-    );
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("UsageFault", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void SecureFault_Handler(void);
 void SecureFault_Handlerr(void) {
-    __asm volatile (
-        "    ldr r0,=str_secure\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_secure: .asciz \"SecureFault\"\n\t"
-        "  .align 2\n\t"
-    );
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("SecureFault", 1U);
 }
 /*..........................................................................*/
 __attribute__((naked)) void Default_Handler(void);
 void Default_Handler(void) {
-    __asm volatile (
-        "    ldr r0,=str_dflt\n\t"
-        "    mov r1,#1\n\t"
-        "    b assert_failed\n\t"
-        "str_dflt: .asciz \"Default\"\n\t"
-        "  .align 2\n\t"
-    );
+    /* disable interrupts and reset SP in case of stack overflow */
+    __asm volatile ("  CPSID i\n  MOV   sp,%0" : : "r" (&__stack_end__));
+    assert_failed("Default", 1U);
 }
-
-
-/*****************************************************************************
-* The function assert_failed defines the error/assertion handling policy
-* for the application. After making sure that the stack is OK, this function
-* calls Q_onAssert, which should NOT return (typically reset the CPU).
-*
-* NOTE: the function Q_onAssert should NOT return.
-*****************************************************************************/
-__attribute__ ((naked, noreturn))
-void assert_failed(char const *module, int loc) {
-    /* re-set the SP in case of stack overflow */
-    __asm volatile (
-        "  MOV sp,%0\n\t"
-        : : "r" (&__stack_end__));
-
-    Q_onAssert(module, loc); /* call the application-specific QP handler */
-
-    for (;;) { /* should not be reached, but just in case loop forever... */
-    }
-}
-
-/****** End Of File *********************************************************/

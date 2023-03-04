@@ -132,7 +132,13 @@ public:
 static struct netif l_netif;   /* the single network interface */
 static QActive *l_active;      /* active object associated with this driver */
 static PbufQueue l_txq;        /* queue of PBUFs for transmission */
-static QEvt l_lwipEvt[LWIP_MAX_OFFSET]; /* immutable LwIP events issued */
+
+// immutable LwIP events issued
+static QEvt const l_lwipEvt[LWIP_MAX_OFFSET] {
+    QEvt(static_cast<QP::QSignal>(LWIP_RX_READY_OFFSET)),
+    QEvt(static_cast<QP::QSignal>(LWIP_TX_READY_OFFSET)),
+    QEvt(static_cast<QP::QSignal>(LWIP_RX_OVERRUN_OFFSET))
+};
 
 static err_t ethernetif_init(struct netif *netif);
 static err_t ethernetif_output(struct netif *netif, struct pbuf *p);
@@ -191,11 +197,6 @@ struct netif *eth_driver_init(QActive *active,
     memcpy(&l_netif.hwaddr[0], macaddr, NETIF_MAX_HWADDR_LEN);
 
     l_active = active; /*save the active object associated with this driver */
-
-    /* set up the immutable events issued by this driver... */
-    l_lwipEvt[LWIP_RX_READY_OFFSET]  .sig = base_sig + LWIP_RX_READY_OFFSET;
-    l_lwipEvt[LWIP_TX_READY_OFFSET]  .sig = base_sig + LWIP_TX_READY_OFFSET;
-    l_lwipEvt[LWIP_RX_OVERRUN_OFFSET].sig = base_sig + LWIP_RX_OVERRUN_OFFSET;
 
 #if LWIP_NETIF_HOSTNAME
     l_netif.hostname = "lwIP";             /* initialize interface hostname */

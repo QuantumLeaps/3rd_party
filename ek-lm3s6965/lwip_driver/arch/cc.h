@@ -49,14 +49,14 @@ typedef u32_t               mem_ptr_t;
 #endif
 
 #if defined(__arm__) && defined(__ARMCC_VERSION)
-                               /* Setup PACKing macros for KEIL/RVMDK Tools */
+    /* Setup PACKing macros for KEIL/RVMDK Tools */
     #define PACK_STRUCT_BEGIN __packed
     #define PACK_STRUCT_STRUCT
     #define PACK_STRUCT_END
     #define PACK_STRUCT_FIELD(x) x
 
 #elif defined (__IAR_SYSTEMS_ICC__)
-                                      /* Setup PACKing macros for IAR Tools */
+    /* Setup PACKing macros for IAR Tools */
     #define PACK_STRUCT_BEGIN
     #define PACK_STRUCT_STRUCT
     #define PACK_STRUCT_END
@@ -64,7 +64,7 @@ typedef u32_t               mem_ptr_t;
     #define PACK_STRUCT_USE_INCLUDES
 
 #else
-                                      /* Setup PACKing macros for GCC Tools */
+    /* Setup PACKing macros for GCC Tools */
     #define PACK_STRUCT_BEGIN
     #define PACK_STRUCT_STRUCT __attribute__ ((__packed__))
     #define PACK_STRUCT_END
@@ -73,10 +73,10 @@ typedef u32_t               mem_ptr_t;
 #endif
 
 #ifdef DEBUG
-    void Q_onAssert(char const * const file, int line);
-    #define LWIP_PLATFORM_ASSERT(msg) Q_onAssert(msg, __LINE__)
+    void Q_onError(char const * const file, int line);
+    #define LWIP_PLATFORM_ASSERT(msg) Q_onError(msg, __LINE__)
 #else
     #define LWIP_PLATFORM_ASSERT(msg) ((void)0)
 #endif
 
-#endif                                                          /* __CC_H__ */
+#endif /* __CC_H__ */

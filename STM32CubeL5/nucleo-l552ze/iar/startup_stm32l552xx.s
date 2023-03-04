@@ -1,81 +1,53 @@
 ;/***************************************************************************/
-;* @file     startup_stm32l552xx.s for IAR assembler
-;* @brief    CMSIS Cortex-M33 Core Device Startup File for STM32L552xx devices
-;* @version  CMSIS 5.x
-;* @date     2022-Jan-27
-;*
-;* @description
-;* Created from the CMSIS template for the specified device
-;* Quantum Leaps, www.state-machine.com
-;*
-;* @note
-;* The function assert_failed defined at the end of this file defines
-;* the error/assertion handling policy for the application and might
-;* need to be customized for each project. This function is defined in
-;* assembly to re-set the stack pointer, in case it is corrupted by the
-;* time assert_failed is called.
-;*
-;********************************************************************************
-;*
-;* <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-;* All rights reserved.</center></h2>
-;*
-;* This software component is licensed by ST under Apache License, Version 2.0,
-;* the "License"; You may not use this file except in compliance with the
-;* License. You may obtain a copy of the License at:
-;*                        opensource.org/licenses/Apache-2.0
-;*
-;*******************************************************************************
+; @file     startup_stm32l552xx.s for IAR assembler
+; @brief    CMSIS Cortex-M33 Core Device Startup File for STM32L552xx devices
+; @version  CMSIS 5.9.0
+; @date     1 Feb 2023
 ;
+; Modified by Quantum Leaps:
+; - Added relocating of the Vector Table to free up the 256B region at 0x0
+;   for NULL-pointer protection by the MPU.
+; - Modified all exception handlers to branch to assert_failed()
+;   instead of locking up the CPU inside an endless loop.
 ;
-; The modules in this file are included in the libraries, and may be replaced
-; by any user-defined modules that define the PUBLIC symbol _program_start or
-; a user defined start symbol.
-; To override the cstartup defined in the library, simply add your modified
-; version to the workbench project.
-;
-; The vector table is normally located at address 0.
-; When debugging in RAM, it can be located in RAM, aligned to at least 2^6.
-; The name "__vector_table" has special meaning for C-SPY:
-; it is where the SP start value is found, and the NVIC vector
-; table register (VTOR) is initialized to this address if != 0.
-;
-; Cortex-M version
-;
+; @description
+; Created from the CMSIS template for the specified device
+; Quantum Leaps, www.state-machine.com
+; *
 
         MODULE  ?cstartup
 
-        ;; Forward declaration of sections.
+        ; Forward declaration of sections.
         SECTION CSTACK:DATA:NOROOT(3)
 
-        SECTION .intvec:CODE:NOROOT(2)
+        SECTION .intvec:CODE:NOROOT(8)
 
         PUBLIC  __vector_table
         PUBLIC  __Vectors
         PUBLIC  __Vectors_End
         PUBLIC  __Vectors_Size
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;
+;******************************************************************************
+; The vector table
+;
         DATA
 __vector_table
         DCD     sfe(CSTACK)
         DCD     Reset_Handler               ; Reset Handler
         DCD     NMI_Handler                 ; NMI Handler
         DCD     HardFault_Handler           ; Hard Fault Handler
-        DCD     MemManage_Handler           ; The MPU fault handler
-        DCD     BusFault_Handler            ; The bus fault handler
-        DCD     UsageFault_Handler          ; The usage fault handler
+        DCD     MemManage_Handler           ; MPU fault handler
+        DCD     BusFault_Handler            ; Bus fault handler
+        DCD     UsageFault_Handler          ; Usage fault handler
         DCD     SecureFault_Handler         ; Secure Fault Handler
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
-        DCD     0                           ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
+        DCD     Default_Handler             ; Reserved
         DCD     SVC_Handler                 ; SVCall handler
-        DCD     DebugMon_Handler            ; Debug monitor handler
-        DCD     0                           ; Reserved
-        DCD     PendSV_Handler              ; The PendSV handler
-        DCD     SysTick_Handler             ; The SysTick handler
+        DCD     DebugMon_Handler            ; Debug Monitor handler
+        DCD     Default_Handler             ; Reserved
+        DCD     PendSV_Handler              ; PendSV handler
+        DCD     SysTick_Handler             ; SysTick handler
 
         ; IRQ handlers...
         DCD     WWDG_IRQHandler             ; Window WatchDog
@@ -194,69 +166,128 @@ __Vectors       EQU   __vector_table
 __Vectors_Size  EQU   __Vectors_End - __Vectors
 
 ;******************************************************************************
-;
-; Weak fault handlers...
+; This is the code for exception handlers.
 ;
         SECTION .text:CODE:REORDER:NOROOT(2)
 
-;.............................................................................
+;******************************************************************************
+; This is the code that gets called when the CPU first starts execution
+; following a reset event.
+;
         PUBWEAK Reset_Handler
         EXTERN  SystemInit
         EXTERN  __iar_program_start
+        EXTERN  assert_failed
+
 Reset_Handler
-        BL      SystemInit  ; CMSIS system initialization
-        BL      __iar_program_start ; IAR startup code
-;.............................................................................
+        LDR     r0,=SystemInit  ; CMSIS system initialization
+        BLX     r0
+
+        ; pre-fill the CSTACK with 0xDEADBEEF...................
+        LDR     r0,=0xDEADBEEF
+        MOV     r1,r0
+        LDR     r2,=sfb(CSTACK)
+        LDR     r3,=sfe(CSTACK)
+Reset_stackInit_fill:
+        STMIA   r2!,{r0,r1}
+        CMP     r2,r3
+        BLT.N   Reset_stackInit_fill
+
+        LDR     r0,=__iar_program_start ; IAR startup code
+        BLX     r0
+
+        ; __iar_program_start calls the main() function, which should not return,
+        ; but just in case jump to assert_failed() if main returns.
+        CPSID   i                ; disable all interrupts
+        LDR     r0,=str_EXIT
+        MOVS    r1,#1
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
+str_EXIT
+        DCB     "EXIT"
+        ALIGNROM 2
+
+;******************************************************************************
         PUBWEAK NMI_Handler
 NMI_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_NMI
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_NMI
         DCB     "NMI"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK HardFault_Handler
 HardFault_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_HardFault
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_HardFault
         DCB     "HardFault"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK MemManage_Handler
 MemManage_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_MemManage
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_MemManage
         DCB     "MemManage"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK BusFault_Handler
 BusFault_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_BusFault
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_BusFault
         DCB     "BusFault"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK UsageFault_Handler
 UsageFault_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_UsageFault
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_UsageFault
         DCB     "UsageFault"
         ALIGNROM 2
 ;.............................................................................
         PUBWEAK SecureFault_Handler
 SecureFault_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_SecureFault
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_SecureFault
         DCB     "SecureFault"
         ALIGNROM 2
@@ -267,47 +298,67 @@ str_SecureFault
 ; Weak non-fault handlers...
 ;
 
+;******************************************************************************
         PUBWEAK SVC_Handler
 SVC_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_SVC
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_SVC
         DCB     "SVC"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK DebugMon_Handler
 DebugMon_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_DebugMon
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_DebugMon
         DCB     "DebugMon"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK PendSV_Handler
 PendSV_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_PendSV
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_PendSV
         DCB     "PendSV"
         ALIGNROM 2
-;.............................................................................
+
+;******************************************************************************
         PUBWEAK SysTick_Handler
 SysTick_Handler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_SysTick
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_SysTick
         DCB     "SysTick"
         ALIGNROM 2
 
 ;******************************************************************************
-;
 ; Weak IRQ handlers...
 ;
 
+        PUBWEAK Default_Handler
         PUBWEAK WWDG_IRQHandler
         PUBWEAK PVD_PVM_IRQHandler
         PUBWEAK RTC_IRQHandler
@@ -414,6 +465,7 @@ str_SysTick
         PUBWEAK ICACHE_IRQHandler
 
 
+Default_Handler
 WWDG_IRQHandler
 PVD_PVM_IRQHandler
 RTC_IRQHandler
@@ -518,34 +570,16 @@ DFSDM1_FLT2_IRQHandler
 DFSDM1_FLT3_IRQHandler
 UCPD1_IRQHandler
 ICACHE_IRQHandler
+        CPSID   i                ; disable all interrupts
         LDR     r0,=str_Undefined
         MOVS    r1,#1
-        B       assert_failed
+        LDR     r2,=sfe(CSTACK)  ; re-set the SP in case of stack overflow
+        MOV     sp,r2
+        LDR     r2,=assert_failed
+        BX      r2
 str_Undefined
         DCB     "Undefined"
         ALIGNROM 2
 
-;*****************************************************************************
-; The function assert_failed defines the error/assertion handling policy
-; for the application. After making sure that the stack is OK, this function
-; calls Q_onAssert, which should NOT return (typically reset the CPU).
-;
-; NOTE: the function Q_onAssert should NOT return.
-;
-; The C proptotype of the assert_failed() and Q_onAssert() functions are:
-; void assert_failed(char const *file, int line);
-; void Q_onAssert   (char const *file, int line);
-;*****************************************************************************
-        PUBLIC  assert_failed
-        EXTERN  Q_onAssert
-assert_failed
-        LDR    r2,=sfe(CSTACK)   ; load the original top of stack
-        MOV    sp,r2             ; re-set the SP in case of stack overflow
-        BL     Q_onAssert        ; call the application-specific handler
-
-        B      .                 ; should not be reached, but just in case...
-
-
         END                      ; end of module
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
