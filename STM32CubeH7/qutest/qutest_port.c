@@ -1,5 +1,5 @@
 //============================================================================
-/ Product: QUTEST port for STM32 NUCLEO-H743ZI board
+// Product: QUTEST port for STM32 NUCLEO-H743ZI board
 // Last updated for version 7.3.0
 // Last updated on  2023-08-18
 //
