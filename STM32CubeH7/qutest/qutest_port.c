@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for STM32 NUCLEO-H743ZI board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-18
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -111,17 +111,17 @@ void QS_onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS_onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS_onFlush(void) {
     for (;;) {
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
-
         if (b != QS_EOD) { // not End-Of-Data?
             // busy-wait as long as UART-TX not ready
             while ((USART3->ISR & UART_FLAG_TXE) == 0U) {
             }
-            USART3->TDR = (b & 0xFFU);
+            USART3->TDR = (uint8_t)b;
         }
         else {
             break;
@@ -142,7 +142,7 @@ void QS_doOutput(void) {
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
-            USART3->TDR = (b & 0xFFU);  // put into TDR
+            USART3->TDR = (uint8_t)b;
         }
     }
 }
@@ -160,7 +160,7 @@ void QS_onTestLoop() {
             QF_INT_ENABLE();
 
             if (b != QS_EOD) { // not End-Of-Data?
-                USART3->TDR = (b & 0xFFU);
+                USART3->TDR = (uint8_t)b;
             }
         }
     }

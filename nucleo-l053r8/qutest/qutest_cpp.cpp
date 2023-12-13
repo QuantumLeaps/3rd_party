@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for the STM32 NUCLEO-L053R8 board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-18
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -166,16 +166,16 @@ void QS::onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS::onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
    for (;;) {
-        QF_INT_DISABLE();
         std::uint16_t b = getByte();
-        QF_INT_ENABLE();
-
         if (b != QS_EOD) {
             while ((USART2->ISR & (1U << 7U)) == 0U) {
             }
-            USART2->TDR  = (b & 0xFFU);  // put into the DR register
+            USART2->TDR = static_cast<std::uint8_t>(b);
         }
         else {
             break;
@@ -190,12 +190,13 @@ void QS::onReset(void) {
 //............................................................................
 void QS::doOutput(void) {
     if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
+
         QF_INT_DISABLE();
         std::uint16_t b = getByte();
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
-            USART2->TDR = (b & 0xFFU);  // put into the DR register
+            USART2->TDR = static_cast<std::uint8_t>(b);
         }
     }
 }
@@ -211,9 +212,13 @@ void QS::onTestLoop() {
         rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
+
+            QF_INT_DISABLE();
             std::uint16_t b = getByte();
+            QF_INT_ENABLE();
+
             if (b != QS_EOD) {  // not End-Of-Data?
-                USART2->TDR = (b & 0xFFU);  // put into the DR register
+                USART2->TDR = static_cast<std::uint8_t>(b);
             }
         }
     }

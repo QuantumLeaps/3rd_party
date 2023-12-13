@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for the EMF32 Pearl Gecko board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-18
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -162,16 +162,16 @@ void QS::onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS::onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
    for (;;) {
-        QF_INT_DISABLE();
         std::uint16_t b = getByte();
-        QF_INT_ENABLE();
-
         if (b != QS_EOD) {
             while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
             }
-            l_USART0->TXDATA  = (b & 0xFFU);
+            l_USART0->TXDATA = static_cast<std::uint8_t>(b);
         }
         else {
             break;
@@ -187,13 +187,13 @@ void QS::onReset(void) {
 }
 //............................................................................
 void QS::doOutput(void) {
-    if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) {  // is TXE empty?
+    if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0U) {  // is TXE empty?
         QF_INT_DISABLE();
         uint16_t b = getByte();
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
-            l_USART0->TXDATA = (b & 0xFFU);  // put into the DR register
+            l_USART0->TXDATA = static_cast<std::uint8_t>(b);
         }
     }
 }
@@ -204,10 +204,10 @@ void QS::onTestLoop() {
 
         rxParse();  // parse all the received bytes
 
-        if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) { // is TXE empty?
+        if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0U) { // is TXE empty?
             uint16_t b = getByte();
             if (b != QS_EOD) {  // not End-Of-Data?
-                l_USART0->TXDATA = (b & 0xFFU);
+                l_USART0->TXDATA = static_cast<std::uint8_t>(b);
             }
         }
     }

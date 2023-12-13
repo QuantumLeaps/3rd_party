@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for EK-TM4C123GXL board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-18
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -167,6 +167,9 @@ void QS::onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS::onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
     uint16_t fifo = UART_TXFIFO_DEPTH; // Tx FIFO depth
     uint8_t const *block;

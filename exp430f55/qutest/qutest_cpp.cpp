@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for MSP-EXP430F5529LP board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-17
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -126,12 +126,21 @@ void QS::onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS::onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
-    uint16_t b;
-    while ((b = getByte()) != QS_EOD) { // next QS byte available?
-        while ((UCA1STAT & UCBUSY) != 0U) { // TX busy?
+    for (;;) {
+        std::uint16_t b = getByte();
+        if (b != QS_EOD) { // not End-Of-Data?
+            // busy-wait as long as UART-TX not ready
+            while ((UCA1STAT & UCBUSY) != 0U) { // TX busy?
+            }
+            UCA1TXBUF = static_cast<std::uint8_t>(b);
         }
-        UCA1TXBUF = static_cast<uint8_t>(b);
+        else {
+            break;
+        }
     }
 }
 //............................................................................
@@ -156,14 +165,12 @@ void QS::onTestLoop() {
 
         if ((UCA1STAT & UCBUSY) == 0U) { // TX NOT busy?
 
-            uint16_t b;
-
             QF_INT_DISABLE();
-            b = getByte();
+            std::uint16_t b = getByte();
             QF_INT_ENABLE();
 
             if (b != QS_EOD) {
-                UCA1TXBUF = static_cast<uint8_t>(b);
+                UCA1TXBUF = static_cast<std::uint8_t>(b);
             }
         }
     }

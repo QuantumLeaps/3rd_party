@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for the MSP-EXP430F5529LP board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-17
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -121,12 +121,21 @@ void QS_onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS_onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS_onFlush(void) {
-    uint16_t b;
-    while ((b = QS_getByte()) != QS_EOD) { // next QS byte available?
-        while ((UCA1STAT & UCBUSY) != 0U) { // TX busy?
+    for (;;) {
+        uint16_t b = QS_getByte();
+        if (b != QS_EOD) { // not End-Of-Data?
+            // busy-wait as long as UART-TX not ready
+            while ((UCA1STAT & UCBUSY) != 0U) { // TX busy?
+            }
+            UCA1TXBUF = (uint8_t)b; // stick the byte to the TX BUF
         }
-        UCA1TXBUF = (uint8_t)b; // stick the byte to the TX BUF
+        else {
+            break;
+        }
     }
 }
 //............................................................................
@@ -139,10 +148,8 @@ void QS_onReset(void) {
 void QS_doOutput(void) {
     if ((UCA1STAT & UCBUSY) == 0U) { // TX NOT busy?
 
-        uint16_t b;
-
         QF_INT_DISABLE();
-        b = QS_getByte();
+        uint16_t b = QS_getByte();
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {
@@ -166,10 +173,8 @@ void QS_onTestLoop() {
 
         if ((UCA1STAT & UCBUSY) == 0U) { // TX NOT busy?
 
-            uint16_t b;
-
             QF_INT_DISABLE();
-            b = QS_getByte();
+            uint16_t b = QS_getByte();
             QF_INT_ENABLE();
 
             if (b != QS_EOD) {

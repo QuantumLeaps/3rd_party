@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for the EFM32-SLSTK3401A board
-// Last updated for version 7.3.0
-// Last updated on  2023-08-18
+// Last updated for version 7.3.2
+// Last updated on  2023-12-13
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -158,16 +158,16 @@ void QS_onCleanup(void) {
     }
 }
 //............................................................................
+// NOTE:
+// No critical section in QS_onFlush() to avoid nesting of critical sections
+// in case QS_onFlush() is called from Q_onError().
 void QS_onFlush(void) {
     for (;;) {
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
-
         if (b != QS_EOD) {
             while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
             }
-            l_USART0->TXDATA  = (b & 0xFFU);
+            l_USART0->TXDATA = (uint8_t)b;
         }
         else {
             break;
@@ -187,7 +187,7 @@ void QS_doOutput(void) {
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
-            l_USART0->TXDATA = (b & 0xFFU);  // put into the DR register
+            l_USART0->TXDATA = (uint8_t)b;
         }
     }
 }
@@ -201,7 +201,7 @@ void QS_onTestLoop() {
         if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0) { // is TXE empty?
             uint16_t b = QS_getByte();
             if (b != QS_EOD) {  // not End-Of-Data?
-                l_USART0->TXDATA = (b & 0xFFU);
+                l_USART0->TXDATA = (uint8_t)b;
             }
         }
     }
