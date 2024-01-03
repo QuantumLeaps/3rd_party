@@ -4,11 +4,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 #---------------------------------------------------------------------------------------
 # Target definition
 #---------------------------------------------------------------------------------------
-if(($ENV{MSYSTEM} STREQUAL MINGW64) OR ($ENV{MSYSTEM} STREQUAL CLANG64))
-    set(CMAKE_SYSTEM_NAME MINGW)
-else()
-    set(CMAKE_SYSTEM_NAME Windows)
-endif()
+set(CMAKE_SYSTEM_NAME Windows)
 
 #---------------------------------------------------------------------------------------
 # Set toolchain paths

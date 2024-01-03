@@ -3,7 +3,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 
 # Target definition
 set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR Arm)
+set(CMAKE_SYSTEM_PROCESSOR arm)
 
 #---------------------------------------------------------------------------------------
 # Set toolchain paths
@@ -56,8 +56,8 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 # -mabi=aapcs           Defines enums to be a variable sized type.
 set(OBJECT_GEN_FLAGS "-mthumb -fno-builtin -Wall -ffunction-sections -fdata-sections -fomit-frame-pointer -fmessage-length=0")
 
-set(CMAKE_C_FLAGS   "${OBJECT_GEN_FLAGS} -std=c17 " CACHE INTERNAL "C Compiler options")
-set(CMAKE_CXX_FLAGS "${OBJECT_GEN_FLAGS} -std=c++11 " CACHE INTERNAL "C++ Compiler options")
+set(CMAKE_C_FLAGS   "${OBJECT_GEN_FLAGS} -std=gnu17 " CACHE INTERNAL "C Compiler options")
+set(CMAKE_CXX_FLAGS "${OBJECT_GEN_FLAGS} -std=gnu++17 " CACHE INTERNAL "C++ Compiler options")
 set(CMAKE_ASM_FLAGS "${OBJECT_GEN_FLAGS} -x assembler-with-cpp " CACHE INTERNAL "ASM Compiler options")
 
 
@@ -104,6 +104,12 @@ set(CMAKE_ASM_COMPILER ${TOOLCHAIN_BIN_DIR}/${TOOLCHAIN}-gcc${TOOLCHAIN_EXT} CAC
 
 set(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_PREFIX}/${${TOOLCHAIN}} ${CMAKE_PREFIX_PATH})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
+add_compile_options(
+    $<IF:$<BOOL:${ARM_CPU}>,-mcpu=${ARM_CPU},-mcpu=cortex-m0>
+    $<$<BOOL:${ARM_FPU}>:-mfpu=${ARM_FPU}>
+    $<$<BOOL:${FLOAT_ABI}>:-mfloat-abi=${FLOAT_ABI}>
+)

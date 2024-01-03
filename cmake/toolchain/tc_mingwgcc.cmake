@@ -4,11 +4,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 #---------------------------------------------------------------------------------------
 # Target definition
 #---------------------------------------------------------------------------------------
-if(($ENV{MSYSTEM} STREQUAL MINGW64) OR ($ENV{MSYSTEM} STREQUAL CLANG64))
-    set(CMAKE_SYSTEM_NAME MINGW)
-else()
-    set(CMAKE_SYSTEM_NAME Windows)
-endif()
+set(CMAKE_SYSTEM_NAME Windows)
 
 #---------------------------------------------------------------------------------------
 # Set toolchain paths
@@ -59,8 +55,8 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 # -fomit-frame-pointer  Omit the frame pointer in functions that don’t need one.
 set(OBJECT_GEN_FLAGS "-O0 -Wall -ffunction-sections -fdata-sections -fomit-frame-pointer -fmessage-length=0")
 
-set(CMAKE_C_FLAGS   "${OBJECT_GEN_FLAGS} -std=c17 " CACHE INTERNAL "C Compiler options")
-set(CMAKE_CXX_FLAGS "${OBJECT_GEN_FLAGS} -std=c++11 " CACHE INTERNAL "C++ Compiler options")
+set(CMAKE_C_FLAGS   "${OBJECT_GEN_FLAGS} -std=gnu17 " CACHE INTERNAL "C Compiler options")
+set(CMAKE_CXX_FLAGS "${OBJECT_GEN_FLAGS} -std=gnu++17 " CACHE INTERNAL "C++ Compiler options")
 set(CMAKE_ASM_FLAGS "${OBJECT_GEN_FLAGS} -x assembler-with-cpp " CACHE INTERNAL "ASM Compiler options")
 
 # -Wl,--gc-sections     Perform the dead code elimination.
@@ -108,6 +104,6 @@ SET(CMAKE_RC_COMPILE_OBJECT "${CMAKE_RC_COMPILER} -O coff -I${CMAKE_CURRENT_SOUR
 
 set(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_PREFIX}/${${TOOLCHAIN}} ${CMAKE_PREFIX_PATH})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
