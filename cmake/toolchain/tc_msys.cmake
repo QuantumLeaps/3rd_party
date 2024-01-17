@@ -12,18 +12,15 @@ endif()
 #---------------------------------------------------------------------------------------
 # Set toolchain paths
 #---------------------------------------------------------------------------------------
-set(TOOLCHAIN x86_64-w64-mingw32)
+set(TOOLCHAIN x86_64-pc-msys)
 
 if(NOT DEFINED TOOLCHAIN_PREFIX)
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
         set(TOOLCHAIN_PREFIX "/usr")
     elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL Darwin)
         set(TOOLCHAIN_PREFIX "/usr/local")
-    elseif(($ENV{MSYSTEM} STREQUAL MINGW64) OR ($ENV{MSYSTEM} STREQUAL CLANG64) OR ($ENV{MSYSTEM} STREQUAL MSYS))
-        set(TOOLCHAIN_PREFIX "$ENV{MSYSTEM_PREFIX}")
-        if($ENV{MSYSTEM} STREQUAL MSYS)
-            set(TOOLCHAIN x86_64-pc-msys)
-        endif()
+    elseif($ENV{MSYSTEM} STREQUAL MSYS)
+        set(TOOLCHAIN_PREFIX "/usr")
     elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows)
         message(STATUS "Please specify the TOOLCHAIN_PREFIX !\n For example: -DTOOLCHAIN_PREFIX=\"C:/Program Files/GNU Tools ARM Embedded\" ")
     else()
