@@ -178,7 +178,7 @@ Reset_Handler   PROC
         LDR     r0,=SystemInit  ; CMSIS system initialization
         BLX     r0
 
-        ; Call the C library enty point that handles startup. This will copy
+        ; Call the C library entry point that handles startup. This will copy
         ; the .data section initializers from flash to SRAM and zero fill the
         ; .bss section.
         ; NOTE: The __main function clears the C stack as well

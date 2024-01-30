@@ -171,7 +171,7 @@ static const int err_to_errno_table[] = {
   set_errno(sk->err); \
 } while (0)
 
-/* Forward delcaration of some functions */
+/* Forward declaration of some functions */
 static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
 static void lwip_getsockopt_internal(void *arg);
 static void lwip_setsockopt_internal(void *arg);

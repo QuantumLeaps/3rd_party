@@ -6,7 +6,7 @@ https://github.com/STMicroelectronics/STM32CubeL5
 
 It has been modified by Quantum Leaps to trim it down and leave only facilities pertaining to the board STM32 **NUCLEO-L552ZE-Q** used in QP examples.
 
-The general structure of the STM32CubeL5 package has been **preserved** for compatibilty with the full STM32Cube package.
+The general structure of the STM32CubeL5 package has been **preserved** for compatibility with the full STM32Cube package.
 
 ```
 STM32CubeL5/
@@ -31,7 +31,7 @@ STM32CubeL5/
 ```
 > **NOTE**<br> The directory `nucleo-l552ze` was added to STM32CubeL5 with the CMSIS-compliant startup code for various toolchains. This startup code has been re-designed to avoid danial of service behavior in the original ST code (endless loops in exception handlers). Also, the added startup code is better integrated with the QP assertions.
 
-> **CAUTION**<br> The availability of some QP exmples for STM32Cube does **NOT** mean that STM32Cube firmware is recommended by Quantum Leaps. In fact, STM32Cube MCU Firmware Package is expressly **NOT** recommended for production code, especially in safety-related applications.
+> **CAUTION**<br> The availability of some QP examples for STM32Cube does **NOT** mean that STM32Cube firmware is recommended by Quantum Leaps. In fact, STM32Cube MCU Firmware Package is expressly **NOT** recommended for production code, especially in safety-related applications.
 
 --------------
 # STM32CubeL5 MCU Firmware Package

@@ -18,7 +18,7 @@ Adjusting the CPU Clock Speed
 =============================
 The current setting is to run at 2MHz from the MSI (internal oscillator),
 but the CPU clock speed can be modified by editing the file
-system_stm32l1xx.c. Ther file system_stm32l1xx.c.pll provides an example
+system_stm32l1xx.c. The file system_stm32l1xx.c.pll provides an example
 of clock setting using the PLL driven from the MSE.
 
 ***
@@ -27,7 +27,3 @@ The NUCLEO boards have a wide range of possible clock selections, depending
 on the solder bridge configuration. Please see Chapter 5.7 "OSC clock" in
 the STM32 NUCLEO Boards User Manual (ST document UM1724) for more information.
 ***
-
-
-
- 
