@@ -25,7 +25,7 @@ if (QPC_FETCH_FROM_GIT AND DEFINED ENV{QPC_URL} AND (NOT QPC_URL))
 endif ()
 
 if(QPC_FETCH_FROM_GIT AND (NOT QPC_URL))
-    set(QPC_URL "https://github.com/stefan/qpc.git")
+    set(QPC_URL "https://github.com/QuantumLeaps/qpc.git")
     message(STATUS "using QPC_URL ('${QPC_URL}') since not specified")
 endif()
 
