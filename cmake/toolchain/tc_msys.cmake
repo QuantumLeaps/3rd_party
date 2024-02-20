@@ -77,9 +77,9 @@ set(CMAKE_ASM_FLAGS_DEBUG "-g3" CACHE INTERNAL "ASM Compiler options for debug b
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g3" CACHE INTERNAL "Linker options for debug build type")
 
 # Options for SPY build are identical to DEBUG build
-set(CMAKE_C_FLAGS_SPY "${CMAKE_C_FLAGS_DEBUG}" CACHE INTERNAL "C Compiler options for spy build type")
-set(CMAKE_CXX_FLAGS_SPY "${CMAKE_CXX_FLAGS_DEBUG}" CACHE INTERNAL "C++ Compiler options for spy build type")
-set(CMAKE_ASM_FLAGS_SPY "${CMAKE_ASM_FLAGS_DEBUG}" CACHE INTERNAL "ASM Compiler options for spy build type")
+set(CMAKE_C_FLAGS_SPY "${CMAKE_C_FLAGS_DEBUG} -DQ_SPY" CACHE INTERNAL "C Compiler options for spy build type")
+set(CMAKE_CXX_FLAGS_SPY "${CMAKE_CXX_FLAGS_DEBUG} -DQ_SPY" CACHE INTERNAL "C++ Compiler options for spy build type")
+set(CMAKE_ASM_FLAGS_SPY "${CMAKE_ASM_FLAGS_DEBUG} -DQ_SPY" CACHE INTERNAL "ASM Compiler options for spy build type")
 set(CMAKE_EXE_LINKER_FLAGS_SPY "${CMAKE_EXE_LINKER_FLAGS_DEBUG}" CACHE INTERNAL "Linker options for spy build type")
 
 # Options for RELEASE build
