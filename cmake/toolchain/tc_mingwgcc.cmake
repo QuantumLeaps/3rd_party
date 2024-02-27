@@ -89,7 +89,7 @@ set(CMAKE_EXE_LINKER_FLAGS_SPY "${CMAKE_EXE_LINKER_FLAGS_DEBUG}" CACHE INTERNAL 
 # -Os   Optimize for size. -Os enables all -O2 optimizations.
 # -flto Runs the standard link-time optimizer.
 set(CMAKE_C_FLAGS_RELEASE "-Os -g0 -flto" CACHE INTERNAL "C Compiler options for release build type")
-set(CMAKE_CXX_FLAGS_RELEASE "-Os g0 -flto" CACHE INTERNAL "C++ Compiler options for release build type")
+set(CMAKE_CXX_FLAGS_RELEASE "-Os -g0 -flto" CACHE INTERNAL "C++ Compiler options for release build type")
 set(CMAKE_ASM_FLAGS_RELEASE "" CACHE INTERNAL "ASM Compiler options for release build type")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-g0 -flto" CACHE INTERNAL "Linker options for release build type")
 

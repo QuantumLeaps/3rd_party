@@ -65,7 +65,7 @@ set(CMAKE_ASM_FLAGS "${OBJECT_GEN_FLAGS} -x assembler-with-cpp " CACHE INTERNAL 
 # --specs=nano.specs    Link with newlib-nano.
 # --specs=nosys.specs   No syscalls, provide empty implementations for the POSIX system calls.
 # set(MAPFILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_PROJECT_NAME}.map" CACHE INTERNAL "Linker Map File")
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections,--cref --specs=nano.specs --specs=nosys.specs -mthumb -nostartfiles -static" CACHE INTERNAL "Linker options")
+set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections,--cref --specs=nano.specs --specs=nosys.specs -mthumb -static" CACHE INTERNAL "Linker options")
 
 #---------------------------------------------------------------------------------------
 # Set debug/release build configuration Options

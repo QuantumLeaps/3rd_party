@@ -73,7 +73,7 @@ find_file(QPC_INIT_CMAKE_FILE qpc_sdk_init.cmake
     PATH_SUFFIXES qpc-src
 )
 if (NOT EXISTS ${QPC_INIT_CMAKE_FILE})
-    message(FATAL_ERROR "Directory '${PICO_SDK_PATH}' does not appear to contain the QPC SDK")
+    message(FATAL_ERROR "Directory '${QPC_SDK_PATH}' does not appear to contain the QPC SDK")
 else()
     cmake_path(GET QPC_INIT_CMAKE_FILE PARENT_PATH QPC_SDK_PATH)
 endif ()
