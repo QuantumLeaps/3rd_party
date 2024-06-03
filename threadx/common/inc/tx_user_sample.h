@@ -1,13 +1,12 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
 /**************************************************************************/
@@ -26,7 +25,7 @@
 /*  PORT SPECIFIC C INFORMATION                            RELEASE        */
 /*                                                                        */
 /*    tx_user.h                                           PORTABLE C      */
-/*                                                           6.1.5        */
+/*                                                           6.3.0        */
 /*                                                                        */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -51,6 +50,21 @@
 /*                                            added option to remove      */
 /*                                            FileX pointer,              */
 /*                                            resulting in version 6.1.5  */
+/*  06-02-2021      Scott Larson            Added options for multiple    */
+/*                                            block pool search & delay,  */
+/*                                            resulting in version 6.1.7  */
+/*  10-15-2021      Yuxin Zhou              Modified comment(s), added    */
+/*                                            user-configurable symbol    */
+/*                                            TX_TIMER_TICKS_PER_SECOND   */
+/*                                            resulting in version 6.1.9  */
+/*  04-25-2022      Wenhui Xie              Modified comment(s),          */
+/*                                            optimized the definition of */
+/*                                            TX_TIMER_TICKS_PER_SECOND,  */
+/*                                            resulting in version 6.1.11 */
+/*  10-31-2023      Xiuwen Cai              Modified comment(s),          */
+/*                                            added option for random     */
+/*                                            number stack filling,       */
+/*                                            resulting in version 6.3.0  */
 /*                                                                        */
 /**************************************************************************/
 
@@ -103,6 +117,15 @@
 #define TX_TIMER_THREAD_PRIORITY                ????
 */
 
+/* Define the common timer tick reference for use by other middleware components. The default
+   value is 10ms (i.e. 100 ticks, defined in tx_api.h), but may be replaced by a port-specific
+   version in tx_port.h or here.
+   Note: the actual hardware timer value may need to be changed (usually in tx_initialize_low_level).  */
+
+/*
+#define TX_TIMER_TICKS_PER_SECOND       (100UL)
+*/
+
 /* Determine if there is a FileX pointer in the thread control block.
    By default, the pointer is there for legacy/backwards compatibility.
    The pointer must also be there for applications using FileX.
@@ -148,6 +171,14 @@
 
 /*
 #define TX_ENABLE_STACK_CHECKING
+*/
+
+/* Determine if random number is used for stack filling. By default, ThreadX uses a fixed
+   pattern for stack filling. When the following is defined, ThreadX uses a random number
+   for stack filling. This is effective only when TX_ENABLE_STACK_CHECKING is defined.  */
+
+/*
+#define TX_ENABLE_RANDOM_NUMBER_STACK_FILLING
 */
 
 /* Determine if preemption-threshold should be disabled. By default, preemption-threshold is
@@ -268,6 +299,18 @@
 
 /*
 #define TX_TIMER_ENABLE_PERFORMANCE_INFO
+*/
+
+/*  Override options for byte pool searches of multiple blocks. */
+
+/*
+#define TX_BYTE_POOL_MULTIPLE_BLOCK_SEARCH    20
+*/
+
+/*  Override options for byte pool search delay to avoid thrashing. */
+
+/*
+#define TX_BYTE_POOL_DELAY_VALUE              3
 */
 
 #endif

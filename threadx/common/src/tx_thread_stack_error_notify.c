@@ -1,13 +1,12 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
 /**************************************************************************/
@@ -27,7 +26,7 @@
 
 #include "tx_api.h"
 #include "tx_thread.h"
-#ifdef TX_ENABLE_STACK_CHECKING
+#if defined(TX_ENABLE_STACK_CHECKING) || defined(TX_PORT_THREAD_STACK_ERROR_HANDLING)
 #include "tx_trace.h"
 #endif
 
@@ -37,7 +36,7 @@
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
 /*    _tx_thread_stack_error_notify                       PORTABLE C      */
-/*                                                           6.1          */
+/*                                                           6.1.9        */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -74,12 +73,19 @@
 /*  05-19-2020     William E. Lamie         Initial Version 6.0           */
 /*  09-30-2020     Yuxin Zhou               Modified comment(s),          */
 /*                                            resulting in version 6.1    */
+/*  06-02-2021     Yuxin Zhou               Modified comment(s), added    */
+/*                                            conditional compilation     */
+/*                                            for ARMv8-M (Cortex M23/33) */
+/*                                            resulting in version 6.1.7  */
+/*  10-15-2021     Yuxin Zhou               Modified comment(s), improved */
+/*                                            stack check error handling, */
+/*                                            resulting in version 6.1.9  */
 /*                                                                        */
 /**************************************************************************/
 UINT  _tx_thread_stack_error_notify(VOID (*stack_error_handler)(TX_THREAD *thread_ptr))
 {
 
-#ifndef TX_ENABLE_STACK_CHECKING
+#if !defined(TX_ENABLE_STACK_CHECKING) && !defined(TX_PORT_THREAD_STACK_ERROR_HANDLING)
 
 UINT        status;
 
@@ -100,6 +106,7 @@ UINT        status;
 
     /* Return completion status.  */
     return(status);
+
 #else
 
 TX_INTERRUPT_SAVE_AREA
@@ -124,4 +131,3 @@ TX_INTERRUPT_SAVE_AREA
     return(TX_SUCCESS);
 #endif
 }
-

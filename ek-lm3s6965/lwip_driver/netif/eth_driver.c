@@ -192,10 +192,10 @@ struct netif *eth_driver_init(QActive *active,
 
     l_active = active;           /* save the AO associated with this driver */
 
-                        /* set up the static events issed by this driver... */
-    l_lwipEvt[LWIP_RX_READY_OFFSET]  .sig = base_sig + LWIP_RX_READY_OFFSET;
-    l_lwipEvt[LWIP_TX_READY_OFFSET]  .sig = base_sig + LWIP_TX_READY_OFFSET;
-    l_lwipEvt[LWIP_RX_OVERRUN_OFFSET].sig = base_sig + LWIP_RX_OVERRUN_OFFSET;
+                       /* set up the static events issued by this driver... */
+    QEvt_ctor(&l_lwipEvt[LWIP_RX_READY_OFFSET], base_sig + LWIP_RX_READY_OFFSET);
+    QEvt_ctor(&l_lwipEvt[LWIP_TX_READY_OFFSET], base_sig + LWIP_TX_READY_OFFSET);
+    QEvt_ctor(&l_lwipEvt[LWIP_RX_OVERRUN_OFFSET], base_sig + LWIP_RX_OVERRUN_OFFSET);
 
 #if LWIP_NETIF_HOSTNAME
     l_netif.hostname = "lwIP";             /* initialize interface hostname */

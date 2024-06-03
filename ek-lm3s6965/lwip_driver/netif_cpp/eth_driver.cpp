@@ -133,8 +133,8 @@ static struct netif l_netif;   /* the single network interface */
 static QActive *l_active;      /* active object associated with this driver */
 static PbufQueue l_txq;        /* queue of PBUFs for transmission */
 
-// immutable LwIP events issued
-static QEvt const l_lwipEvt[LWIP_MAX_OFFSET] {
+// static LwIP events issued
+static QEvt l_lwipEvt[LWIP_MAX_OFFSET] {
     QEvt(static_cast<QP::QSignal>(LWIP_RX_READY_OFFSET)),
     QEvt(static_cast<QP::QSignal>(LWIP_TX_READY_OFFSET)),
     QEvt(static_cast<QP::QSignal>(LWIP_RX_OVERRUN_OFFSET))
@@ -198,8 +198,13 @@ struct netif *eth_driver_init(QActive *active,
 
     l_active = active; /*save the active object associated with this driver */
 
+    /* set up the static events issued by this driver... */
+    l_lwipEvt[LWIP_RX_READY_OFFSET]   = QEvt(base_sig + LWIP_RX_READY_OFFSET);
+    l_lwipEvt[LWIP_TX_READY_OFFSET]   = QEvt(base_sig + LWIP_TX_READY_OFFSET);
+    l_lwipEvt[LWIP_RX_OVERRUN_OFFSET] = QEvt(base_sig + LWIP_RX_OVERRUN_OFFSET);
+
 #if LWIP_NETIF_HOSTNAME
-    l_netif.hostname = "lwIP";             /* initialize interface hostname */
+    l_netif.hostname = const_cast<char *>("lwIP");  /* interface hostname */
 #endif
     l_netif.name[0] = 'Q';
     l_netif.name[1] = 'P';

@@ -1,13 +1,12 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
 /**************************************************************************/
@@ -175,7 +174,7 @@ VOID            (*_tx_thread_mutex_release)(TX_THREAD *thread_ptr);
 ULONG           _tx_build_options;
 
 
-#ifdef TX_ENABLE_STACK_CHECKING
+#if defined(TX_ENABLE_STACK_CHECKING) || defined(TX_PORT_THREAD_STACK_ERROR_HANDLING)
 
 /* Define the global function pointer for stack error handling. If a stack error is
    detected and the application has registered a stack error handler, it will be
@@ -277,7 +276,7 @@ const CHAR _tx_thread_special_string[] =
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
 /*    _tx_thread_initialize                               PORTABLE C      */
-/*                                                           6.1          */
+/*                                                           6.1.9        */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -310,6 +309,12 @@ const CHAR _tx_thread_special_string[] =
 /*  05-19-2020     William E. Lamie         Initial Version 6.0           */
 /*  09-30-2020     Yuxin Zhou               Modified comment(s),          */
 /*                                            resulting in version 6.1    */
+/*  06-02-2021     Yuxin Zhou               Modified comment(s), added    */
+/*                                            Execution Profile support,  */
+/*                                            resulting in version 6.1.7  */
+/*  10-15-2021     Yuxin Zhou               Modified comment(s), improved */
+/*                                            stack check error handling, */
+/*                                            resulting in version 6.1.9  */
 /*                                                                        */
 /**************************************************************************/
 VOID  _tx_thread_initialize(VOID)
@@ -439,7 +444,7 @@ VOID  _tx_thread_initialize(VOID)
 #ifdef TX_ENABLE_EVENT_TRACE
                             | (((ULONG) 1) << 8)
 #endif
-#ifdef TX_ENABLE_EXECUTION_CHANGE_NOTIFY
+#if defined(TX_ENABLE_EXECUTION_CHANGE_NOTIFY) || defined(TX_EXECUTION_PROFILE_ENABLE)
                             | (((ULONG) 1) << 7)
 #endif
 #if TX_PORT_SPECIFIC_BUILD_OPTIONS != 0

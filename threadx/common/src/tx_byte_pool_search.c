@@ -1,13 +1,12 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
 /**************************************************************************/
@@ -35,7 +34,7 @@
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
 /*    _tx_byte_pool_search                                PORTABLE C      */
-/*                                                           6.1          */
+/*                                                           6.1.7        */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -76,9 +75,12 @@
 /*                                                                        */
 /*    DATE              NAME                      DESCRIPTION             */
 /*                                                                        */
-/*  05-19-2020     William E. Lamie         Initial Version 6.0           */
-/*  09-30-2020     Yuxin Zhou               Modified comment(s),          */
+/*  05-19-2020      William E. Lamie        Initial Version 6.0           */
+/*  09-30-2020      Yuxin Zhou              Modified comment(s),          */
 /*                                            resulting in version 6.1    */
+/*  06-02-2021      Scott Larson            Improve possible free bytes   */
+/*                                            calculation,                */
+/*                                            resulting in version 6.1.7  */
 /*                                                                        */
 /**************************************************************************/
 UCHAR  *_tx_byte_pool_search(TX_BYTE_POOL *pool_ptr, ULONG memory_size)
@@ -96,13 +98,16 @@ UINT            first_free_block_found =  TX_FALSE;
 TX_THREAD       *thread_ptr;
 ALIGN_TYPE      *free_ptr;
 UCHAR           *work_ptr;
+ULONG           total_theoretical_available;
 
 
     /* Disable interrupts.  */
     TX_DISABLE
 
     /* First, determine if there are enough bytes in the pool.  */
-    if (memory_size >= pool_ptr -> tx_byte_pool_available)
+    /* Theoretical bytes available = free bytes + ((fragments-2) * overhead of each block) */
+    total_theoretical_available = pool_ptr -> tx_byte_pool_available + ((pool_ptr -> tx_byte_pool_fragments - 2) * ((sizeof(UCHAR *)) + (sizeof(ALIGN_TYPE))));
+    if (memory_size >= total_theoretical_available)
     {
 
         /* Restore interrupts.  */
@@ -146,7 +151,6 @@ UCHAR           *work_ptr;
                 /* Determine if this is the first free block.  */
                 if (first_free_block_found == TX_FALSE)
                 {
-
                     /* This is the first free block.  */
                     pool_ptr->tx_byte_pool_search =  current_ptr;
 
@@ -207,14 +211,12 @@ UCHAR           *work_ptr;
                         /* See if the search pointer is affected.  */
                         if (pool_ptr -> tx_byte_pool_search ==  next_ptr)
                         {
-
                             /* Yes, update the search pointer.   */
                             pool_ptr -> tx_byte_pool_search =  current_ptr;
                         }
                     }
                     else
                     {
-
                         /* Neighbor is not free so we can skip over it!  */
                         next_block_link_ptr =  TX_UCHAR_TO_INDIRECT_UCHAR_POINTER_CONVERT(next_ptr);
                         current_ptr =  *next_block_link_ptr;
@@ -222,7 +224,6 @@ UCHAR           *work_ptr;
                         /* Decrement the examined block count to account for this one.  */
                         if (examine_blocks != ((UINT) 0))
                         {
-
                             examine_blocks--;
 
 #ifdef TX_BYTE_POOL_ENABLE_PERFORMANCE_INFO

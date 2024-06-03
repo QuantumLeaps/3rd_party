@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for STM32 NUCLEO-C031C6 board
-// Last updated for version 7.3.2
-// Last updated on  2023-12-13
+// Last updated for version 7.4.0
+// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -169,7 +169,7 @@ void QS::onCleanup(void) {
 // No critical section in QS::onFlush() to avoid nesting of critical sections
 // in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
-   for (;;) {
+    for (;;) {
         std::uint16_t b = getByte();
         if (b != QS_EOD) {
             while ((USART2->ISR & (1U << 7U)) == 0U) {

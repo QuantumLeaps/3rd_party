@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for the EFM32-SLSTK3401A board
-// Last updated for version 7.3.2
-// Last updated on  2023-12-13
+// Last updated for version 7.4.0
+// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------

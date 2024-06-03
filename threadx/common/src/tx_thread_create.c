@@ -1,13 +1,12 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
 /**************************************************************************/
@@ -36,7 +35,7 @@
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
 /*    _tx_thread_create                                   PORTABLE C      */
-/*                                                           6.1          */
+/*                                                           6.3.0        */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -79,11 +78,19 @@
 /*                                                                        */
 /*    DATE              NAME                      DESCRIPTION             */
 /*                                                                        */
-/*  05-19-2020     William E. Lamie         Initial Version 6.0           */
-/*  09-30-2020     William E. Lamie         Modified comment(s), and      */
+/*  05-19-2020      William E. Lamie        Initial Version 6.0           */
+/*  09-30-2020      William E. Lamie        Modified comment(s), and      */
 /*                                            changed stack calculations  */
 /*                                            to use ALIGN_TYPE integers, */
 /*                                            resulting in version 6.1    */
+/*  06-02-2021      William E. Lamie        Modified comment(s), and      */
+/*                                            supported TX_MISRA_ENABLE,  */
+/*  08-02-2021      Scott Larson            Removed unneeded cast,        */
+/*                                            resulting in version 6.1.8  */
+/*  10-31-2023      Xiuwen Cai              Modified comment(s),          */
+/*                                            added option for random     */
+/*                                            number stack filling,       */
+/*                                            resulting in version 6.3.0  */
 /*                                                                        */
 /**************************************************************************/
 UINT  _tx_thread_create(TX_THREAD *thread_ptr, CHAR *name_ptr, VOID (*entry_function)(ULONG id), ULONG entry_input,
@@ -105,6 +112,17 @@ ALIGN_TYPE              updated_stack_start;
 #endif
 
 #ifndef TX_DISABLE_STACK_FILLING
+#if defined(TX_ENABLE_RANDOM_NUMBER_STACK_FILLING) && defined(TX_ENABLE_STACK_CHECKING)
+
+    /* Initialize the stack fill value to a 8-bit random value.  */
+    thread_ptr -> tx_thread_stack_fill_value = ((ULONG) TX_RAND()) & 0xFFUL;
+
+    /* Duplicate the random value in each of the 4 bytes of the stack fill value.  */
+    thread_ptr -> tx_thread_stack_fill_value = thread_ptr -> tx_thread_stack_fill_value |
+                    (thread_ptr -> tx_thread_stack_fill_value << 8) |
+                    (thread_ptr -> tx_thread_stack_fill_value << 16) |
+                    (thread_ptr -> tx_thread_stack_fill_value << 24);
+#endif
 
     /* Set the thread stack to a pattern prior to creating the initial
        stack frame.  This pattern is used by the stack checking routines
@@ -120,8 +138,12 @@ ALIGN_TYPE              updated_stack_start;
     stack_size =  ((stack_size/(sizeof(ULONG))) * (sizeof(ULONG))) - (sizeof(ULONG));
 
     /* Ensure the starting stack address is evenly aligned.  */
+#ifdef TX_MISRA_ENABLE
+    new_stack_start = TX_POINTER_TO_ULONG_CONVERT(stack_start);
+#else
     new_stack_start =  TX_POINTER_TO_ALIGN_TYPE_CONVERT(stack_start);
-    updated_stack_start =  ((((ULONG) new_stack_start) + ((sizeof(ULONG)) - ((ULONG) 1)) ) & (~((sizeof(ULONG)) - ((ULONG) 1))));
+#endif /* TX_MISRA_ENABLE */
+    updated_stack_start =  (((new_stack_start) + ((sizeof(ULONG)) - ((ULONG) 1)) ) & (~((sizeof(ULONG)) - ((ULONG) 1))));
 
     /* Determine if the starting stack address is different.  */
     if (new_stack_start != updated_stack_start)
@@ -132,7 +154,11 @@ ALIGN_TYPE              updated_stack_start;
     }
 
     /* Update the starting stack pointer.  */
+#ifdef TX_MISRA_ENABLE
+    stack_start = TX_ULONG_TO_POINTER_CONVERT(updated_stack_start);
+#else
     stack_start =  TX_ALIGN_TYPE_TO_POINTER_CONVERT(updated_stack_start);
+#endif /* TX_MISRA_ENABLE */
 #endif
 
     /* Prepare the thread control block prior to placing it on the created

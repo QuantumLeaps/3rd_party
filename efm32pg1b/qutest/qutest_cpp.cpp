@@ -1,7 +1,7 @@
 //============================================================================
 // Product: QUTEST port for the EMF32 Pearl Gecko board
-// Last updated for version 7.3.2
-// Last updated on  2023-12-13
+// Last updated for version 7.4.0
+// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -45,7 +45,7 @@
 #include "em_usart.h"  // USART (SiLabs)
 // add other drivers if necessary...
 
-//Q_DEFINE_THIS_MODULE("qutest_port")
+//Q_DEFINE_THIS_MODULE("qutest_port");
 
 using namespace QP;
 

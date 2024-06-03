@@ -1,13 +1,12 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
 /**************************************************************************/
@@ -26,7 +25,7 @@
 /*  COMPONENT DEFINITION                                   RELEASE        */
 /*                                                                        */
 /*    tx_thread.h                                         PORTABLE C      */
-/*                                                           6.1.2        */
+/*                                                           6.1.9        */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -48,6 +47,9 @@
 /*                                            moved TX_THREAD_GET_SYSTEM_ */
 /*                                            STATE to tx_api.h,          */
 /*                                            resulting in version 6.1.2  */
+/*  10-15-2021     Scott Larson             Modified comment(s), improved */
+/*                                            stack check error handling, */
+/*                                            resulting in version 6.1.9  */
 /*                                                                        */
 /**************************************************************************/
 
@@ -112,6 +114,7 @@
 #ifndef TX_THREAD_SET_CURRENT
 #define TX_THREAD_SET_CURRENT(a)            _tx_thread_current_ptr =  (a);
 #endif
+
 
 
 /* Define the get system state macro. By default, it simply maps to the variable _tx_thread_system_state.  */
@@ -437,7 +440,7 @@ THREAD_DECLARE  VOID            (*_tx_thread_mutex_release)(TX_THREAD *thread_pt
 THREAD_DECLARE  ULONG           _tx_build_options;
 
 
-#ifdef TX_ENABLE_STACK_CHECKING
+#if defined(TX_ENABLE_STACK_CHECKING) || defined(TX_PORT_THREAD_STACK_ERROR_HANDLING)
 
 /* Define the global function pointer for stack error handling. If a stack error is
    detected and the application has registered a stack error handler, it will be

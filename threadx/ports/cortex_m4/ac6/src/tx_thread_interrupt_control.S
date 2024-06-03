@@ -1,81 +1,84 @@
-@/**************************************************************************/
-@/*                                                                        */
-@/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-@/*                                                                        */
-@/*       This software is licensed under the Microsoft Software License   */
-@/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-@/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-@/*       and in the root directory of this software.                      */
-@/*                                                                        */
-@/**************************************************************************/
+/***************************************************************************
+ * Copyright (c) 2024 Microsoft Corporation
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License which is available at
+ * https://opensource.org/licenses/MIT.
+ *
+ * SPDX-License-Identifier: MIT
+ **************************************************************************/
 
 
-@/**************************************************************************/
-@/**************************************************************************/
-@/**                                                                       */
-@/** ThreadX Component                                                     */
-@/**                                                                       */
-@/**   Thread                                                              */
-@/**                                                                       */
-@/**************************************************************************/
-@/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+/**                                                                       */
+/** ThreadX Component                                                     */
+/**                                                                       */
+/**   Thread                                                              */
+/**                                                                       */
+/**************************************************************************/
+/**************************************************************************/
 
+#ifdef TX_INCLUDE_USER_DEFINE_FILE
+#include "tx_user.h"
+#endif
 
     .text 32
     .align 4
     .syntax unified
-@/**************************************************************************/
-@/*                                                                        */
-@/*  FUNCTION                                               RELEASE        */
-@/*                                                                        */
-@/*    _tx_thread_interrupt_control                      Cortex-M4/AC6     */
-@/*                                                           6.1          */
-@/*  AUTHOR                                                                */
-@/*                                                                        */
-@/*    William E. Lamie, Microsoft Corporation                             */
-@/*                                                                        */
-@/*  DESCRIPTION                                                           */
-@/*                                                                        */
-@/*    This function is responsible for changing the interrupt lockout     */
-@/*    posture of the system.                                              */
-@/*                                                                        */
-@/*  INPUT                                                                 */
-@/*                                                                        */
-@/*    new_posture                           New interrupt lockout posture */
-@/*                                                                        */
-@/*  OUTPUT                                                                */
-@/*                                                                        */
-@/*    old_posture                           Old interrupt lockout posture */
-@/*                                                                        */
-@/*  CALLS                                                                 */
-@/*                                                                        */
-@/*    None                                                                */
-@/*                                                                        */
-@/*  CALLED BY                                                             */
-@/*                                                                        */
-@/*    Application Code                                                    */
-@/*                                                                        */
-@/*  RELEASE HISTORY                                                       */
-@/*                                                                        */
-@/*    DATE              NAME                      DESCRIPTION             */
-@/*                                                                        */
-@/*  09-30-2020     William E. Lamie         Initial Version 6.1           */
-@/*                                                                        */
-@/**************************************************************************/
-@/* UINT   _tx_thread_interrupt_control(UINT new_posture)
-{  */
+/**************************************************************************/
+/*                                                                        */
+/*  FUNCTION                                               RELEASE        */
+/*                                                                        */
+/*    _tx_thread_interrupt_control                     Cortex-M4/AC6      */
+/*                                                           6.2.1        */
+/*  AUTHOR                                                                */
+/*                                                                        */
+/*    Scott Larson, Microsoft Corporation                                 */
+/*                                                                        */
+/*  DESCRIPTION                                                           */
+/*                                                                        */
+/*    This function is responsible for changing the interrupt lockout     */
+/*    posture of the system.                                              */
+/*                                                                        */
+/*  INPUT                                                                 */
+/*                                                                        */
+/*    new_posture                           New interrupt lockout posture */
+/*                                                                        */
+/*  OUTPUT                                                                */
+/*                                                                        */
+/*    old_posture                           Old interrupt lockout posture */
+/*                                                                        */
+/*  CALLS                                                                 */
+/*                                                                        */
+/*    None                                                                */
+/*                                                                        */
+/*  CALLED BY                                                             */
+/*                                                                        */
+/*    Application Code                                                    */
+/*                                                                        */
+/*  RELEASE HISTORY                                                       */
+/*                                                                        */
+/*    DATE              NAME                      DESCRIPTION             */
+/*                                                                        */
+/*  06-02-2021      Scott Larson            Initial Version 6.1.7         */
+/*  03-08-2023      Scott Larson            Include tx_user.h,            */
+/*                                            resulting in version 6.2.1  */
+/*                                                                        */
+/**************************************************************************/
+// UINT   _tx_thread_interrupt_control(UINT new_posture)
+// {
     .global  _tx_thread_interrupt_control
     .thumb_func
 _tx_thread_interrupt_control:
-
-@/* Pickup current interrupt lockout posture.  */
-
-    MRS     r1, PRIMASK                             @ Pickup current interrupt lockout
-
-@/* Apply the new interrupt posture.  */
-
-    MSR     PRIMASK, r0                             @ Apply the new interrupt lockout
-    MOV     r0, r1                                  @ Transfer old to return register
-    BX      lr                                      @ Return to caller
-
-@/* } */
+#ifdef TX_PORT_USE_BASEPRI
+    MRS     r1, BASEPRI                         // Pickup current interrupt posture
+    MSR     BASEPRI, r0                         // Apply the new interrupt posture
+    MOV     r0, r1                              // Transfer old to return register
+#else
+    MRS     r1, PRIMASK                         // Pickup current interrupt lockout
+    MSR     PRIMASK, r0                         // Apply the new interrupt lockout
+    MOV     r0, r1                              // Transfer old to return register
+#endif
+    BX      lr                                  // Return to caller
+// }
