@@ -1,6 +1,6 @@
 //============================================================================
 // Product: QUTEST port for the EK-TM4C123GXL board
-// Last updated for version 7.4.0
+// Last updated for version 8.0.0
 // Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
@@ -206,8 +206,8 @@ void QS_doOutput(void) {
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_.inTestLoop = true;
-    while (QS_rxPriv_.inTestLoop) {
+    QS_rxPriv_->inTestLoop = true;
+    while (QS_rxPriv_->inTestLoop) {
 
         // toggle the User LED on and then off, see NOTE01
         GPIOF->DATA_Bits[LED_BLUE] = LED_BLUE;  // turn the Blue LED on
@@ -230,5 +230,5 @@ void QS_onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_.inTestLoop = true;
+    QS_rxPriv_->inTestLoop = true;
 }

@@ -1,6 +1,6 @@
 //============================================================================
 // Product: QUTEST port for NUCLEO-C031C6 board
-// Last updated for version 7.4.0
+// Last updated for version 8.0.0
 // Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
@@ -194,8 +194,8 @@ void QS_doOutput(void) {
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_.inTestLoop = true;
-    while (QS_rxPriv_.inTestLoop) {
+    QS_rxPriv_->inTestLoop = true;
+    while (QS_rxPriv_->inTestLoop) {
 
         // toggle an LED LD2 on and then off (not enough LEDs, see NOTE02)
         GPIOA->BSRR = (1U << LD4_PIN);         // turn LED[n] on
@@ -215,7 +215,7 @@ void QS_onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_.inTestLoop = true;
+    QS_rxPriv_->inTestLoop = true;
 }
 //============================================================================
 // NOTE0:

@@ -47,11 +47,12 @@ if (NOT QPC_SDK_PATH)
                 GIT_TAG master
                 GIT_SUBMODULES_RECURSE FALSE
                 GIT_SHALLOW ON
+                SOURCE_SUBDIR test
         )
 
         if (NOT qpc)
             message("Downloading QPC SDK")
-            FetchContent_Populate(qpc)
+            FetchContent_MakeAvailable(qpc)
             message("QPC source dir = '${qpc_SOURCE_DIR}', QPC binary dir = '${qpc_BINARY_DIR}'")
             set(QPC_SDK_PATH ${qpc_SOURCE_DIR})
         endif ()

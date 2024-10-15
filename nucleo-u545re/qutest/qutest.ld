@@ -34,7 +34,7 @@ ENTRY(Reset_Handler) /* entry Point */
 MEMORY { /* memory map of STM32U545RETxQ */
     ROM (rx)    : ORIGIN = 0x08000000, LENGTH = 512K
     RAM (xrw)   : ORIGIN = 0x20000000, LENGTH = 256K
-    SRAM4 (xrw)	: ORIGIN = 0x28000000, LENGTH = 16K
+    SRAM4 (xrw) : ORIGIN = 0x28000000, LENGTH = 16K
 }
 
 /* The size of the stack used by the application. NOTE: you need to adjust  */
