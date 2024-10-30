@@ -47,11 +47,12 @@ if (NOT QPCPP_SDK_PATH)
                 GIT_TAG master
                 GIT_SUBMODULES_RECURSE FALSE
                 GIT_SHALLOW ON
+                SOURCE_SUBDIR test
         )
 
         if (NOT qpcpp)
             message("Downloading QPCPP SDK")
-            FetchContent_Populate(qpcpp)
+            FetchContent_MakeAvailable(qpcpp)
             message("QPCPP source dir = '${qpcpp_SOURCE_DIR}', QPCPP binary dir = '${qpcpp_BINARY_DIR}'")
             set(QPCPP_SDK_PATH ${qpcpp_SOURCE_DIR})
         endif ()
