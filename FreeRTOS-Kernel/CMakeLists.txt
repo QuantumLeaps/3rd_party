@@ -4,14 +4,16 @@ cmake_minimum_required(VERSION 3.15)
 #   FREERTOS_PORT, if not specified and native port detected, uses the native compile.
 #
 # User is responsible for one library target:
-#   freertos_config ,typcially an INTERFACE library
+#   freertos_config ,typically an INTERFACE library
 #
 # DEPRECATED: FREERTOS_CONFIG_FILE_DIRECTORY - but still supported if no freertos_config defined for now.
 #             May be removed at some point in the future.
+#
 # User can choose which heap implementation to use (either the implementations
-# included with FreeRTOS [1..5] or a custom implementation ) by providing the
-# option FREERTOS_HEAP. If the option is not set, the cmake will default to
-# using heap_4.c.
+# included with FreeRTOS [1..5] or a custom implementation) by providing the
+# option FREERTOS_HEAP. When dynamic allocation is used, the user must specify a
+# heap implementation. If the option is not set, the cmake will use no heap
+# implementation (e.g. when only static allocation is used).
 
 # `freertos_config` target defines the path to FreeRTOSConfig.h and optionally other freertos based config files
 if(NOT TARGET freertos_config )
@@ -37,9 +39,6 @@ if(NOT TARGET freertos_config )
     endif()
 endif()
 
-# Heap number or absolute path to custom heap implementation provided by user
-set(FREERTOS_HEAP "4" CACHE STRING "FreeRTOS heap model number. 1 .. 5. Or absolute path to custom heap source file")
-
 # FreeRTOS port option
 if(NOT FREERTOS_PORT)
     message(WARNING " FREERTOS_PORT is not set. Please specify it from top-level CMake file (example):\n"
@@ -59,8 +58,8 @@ if(NOT FREERTOS_PORT)
         " CODEWARRIOR_COLDFIRE_V2          - Compiler: CoreWarrior   Target: ColdFire V2\n"
         " CODEWARRIOR_HCS12                - Compiler: CoreWarrior   Target: HCS12\n"
         " GCC_ARM_CA9                      - Compiler: GCC           Target: ARM Cortex-A9\n"
-        " GCC_ARM_CA53_64_BIT              - Compiler: GCC           Target: ARM Cortex-A53 64 bit\n"
-        " GCC_ARM_CA53_64_BIT_SRE          - Compiler: GCC           Target: ARM Cortex-A53 64 bit SRE\n"
+        " GCC_ARM_AARCH64                  - Compiler: GCC           Target: ARM v8-A\n"
+        " GCC_ARM_AARCH64_SRE              - Compiler: GCC           Target: ARM v8-A SRE\n"
         " GCC_ARM_CM0                      - Compiler: GCC           Target: ARM Cortex-M0\n"
         " GCC_ARM_CM3                      - Compiler: GCC           Target: ARM Cortex-M3\n"
         " GCC_ARM_CM3_MPU                  - Compiler: GCC           Target: ARM Cortex-M3 with MPU\n"
@@ -86,6 +85,7 @@ if(NOT FREERTOS_PORT)
         " GCC_ARM_CM85_NTZ_NONSECURE       - Compiler: GCC           Target: ARM Cortex-M85 non-trustzone non-secure\n"
         " GCC_ARM_CM85_TFM                 - Compiler: GCC           Target: ARM Cortex-M85 non-secure for TF-M\n"
         " GCC_ARM_CR5                      - Compiler: GCC           Target: ARM Cortex-R5\n"
+        " GCC_ARM_CRX_MPU                  - Compiler: GCC           Target: ARM Cortex-Rx with MPU\n"
         " GCC_ARM_CRX_NOGIC                - Compiler: GCC           Target: ARM Cortex-Rx no GIC\n"
         " GCC_ARM7_AT91FR40008             - Compiler: GCC           Target: ARM7 Atmel AT91R40008\n"
         " GCC_ARM7_AT91SAM7S               - Compiler: GCC           Target: ARM7 Atmel AT91SAM7S\n"
@@ -107,6 +107,7 @@ if(NOT FREERTOS_PORT)
         " GCC_PPC440_XILINX                - Compiler: GCC           Target: Xilinx PPC440\n"
         " GCC_RISC_V                       - Compiler: GCC           Target: RISC-V\n"
         " GCC_RISC_V_PULPINO_VEGA_RV32M1RM - Compiler: GCC           Target: RISC-V Pulpino Vega RV32M1RM\n"
+        " GCC_RISC_V_GENERIC               - Compiler: GCC           Target: RISC-V with FREERTOS_RISCV_EXTENSION\n"
         " GCC_RL78                         - Compiler: GCC           Target: Renesas RL78\n"
         " GCC_RX100                        - Compiler: GCC           Target: Renesas RX100\n"
         " GCC_RX200                        - Compiler: GCC           Target: Renesas RX200\n"
@@ -137,15 +138,18 @@ if(NOT FREERTOS_PORT)
         " IAR_ARM_CM33_NONSECURE           - Compiler: IAR           Target: ARM Cortex-M33 non-secure\n"
         " IAR_ARM_CM33_SECURE              - Compiler: IAR           Target: ARM Cortex-M33 secure\n"
         " IAR_ARM_CM33_NTZ_NONSECURE       - Compiler: IAR           Target: ARM Cortex-M33 non-trustzone non-secure\n"
+        " IAR_ARM_CM33_TFM                 - Compiler: IAR           Target: ARM Cortex-M33 non-secure for TF-M\n"
         " IAR_ARM_CM35P_NONSECURE          - Compiler: IAR           Target: ARM Cortex-M35P non-secure\n"
         " IAR_ARM_CM35P_SECURE             - Compiler: IAR           Target: ARM Cortex-M35P secure\n"
         " IAR_ARM_CM35P_NTZ_NONSECURE      - Compiler: IAR           Target: ARM Cortex-M35P non-trustzone non-secure\n"
         " IAR_ARM_CM55_NONSECURE           - Compiler: IAR           Target: ARM Cortex-M55 non-secure\n"
         " IAR_ARM_CM55_SECURE              - Compiler: IAR           Target: ARM Cortex-M55 secure\n"
         " IAR_ARM_CM55_NTZ_NONSECURE       - Compiler: IAR           Target: ARM Cortex-M55 non-trustzone non-secure\n"
+        " IAR_ARM_CM55_TFM                 - Compiler: IAR           Target: ARM Cortex-M55 non-secure for TF-M\n"
         " IAR_ARM_CM85_NONSECURE           - Compiler: IAR           Target: ARM Cortex-M85 non-secure\n"
         " IAR_ARM_CM85_SECURE              - Compiler: IAR           Target: ARM Cortex-M85 secure\n"
         " IAR_ARM_CM85_NTZ_NONSECURE       - Compiler: IAR           Target: ARM Cortex-M85 non-trustzone non-secure\n"
+        " IAR_ARM_CM85_TFM                 - Compiler: IAR           Target: ARM Cortex-M85 non-secure for TF-M\n"
         " IAR_ARM_CRX_NOGIC                - Compiler: IAR           Target: ARM Cortex-Rx no GIC\n"
         " IAR_ATMEGA323                    - Compiler: IAR           Target: ATMega323\n"
         " IAR_ATMEL_SAM7S64                - Compiler: IAR           Target: Atmel SAM7S64\n"
@@ -157,6 +161,7 @@ if(NOT FREERTOS_PORT)
         " IAR_MSP430                       - Compiler: IAR           Target: MSP430\n"
         " IAR_MSP430X                      - Compiler: IAR           Target: MSP430X\n"
         " IAR_RISC_V                       - Compiler: IAR           Target: RISC-V\n"
+        " IAR_RISC_V_GENERIC               - Compiler: IAR           Target: RISC-V with FREERTOS_RISCV_EXTENSION\n"
         " IAR_RL78                         - Compiler: IAR           Target: Renesas RL78\n"
         " IAR_RX100                        - Compiler: IAR           Target: Renesas RX100\n"
         " IAR_RX600                        - Compiler: IAR           Target: Renesas RX600\n"
@@ -196,6 +201,7 @@ if(NOT FREERTOS_PORT)
         " SOFTUNE_MB91460                  - Compiler: Softune       Target: MB91460\n"
         " SOFTUNE_MB96340                  - Compiler: Softune       Target: MB96340\n"
         " TASKING_ARM_CM4F                 - Compiler: Tasking       Target: ARM Cortex-M4 with FPU\n"
+        " TEMPLATE                         - Compiler: HOST          Target: None\n"
         " CDK_THEAD_CK802                  - Compiler: CDK           Target: T-head CK802\n"
         " XCC_XTENSA                       - Compiler: XCC           Target: Xtensa\n"
         " WIZC_PIC18                       - Compiler: WizC          Target: PIC18")
@@ -215,59 +221,27 @@ elseif((FREERTOS_PORT STREQUAL "A_CUSTOM_PORT") AND (NOT TARGET freertos_kernel_
     "    port.c\n"
     "    portmacro.h\n"
     " Where FreeRTOSCustomPort/CMakeLists.txt is a modified version of:\n"
-    "   add_library(freertos_kernel_port STATIC)\n"
+    "   add_library(freertos_kernel_port OBJECT)\n"
     "   target_sources(freertos_kernel_port\n"
     "     PRIVATE\n"
     "       port.c\n"
     "       portmacro.h)\n"
-    "   target_include_directories(freertos_kernel_port\n"
-    "     PUBLIC\n"
+    "   add_library(freertos_kernel_port_headers INTERFACE)\n"
+    "     target_include_directories(freertos_kernel_port_headers INTERFACE \n"
     "      .)\n"
     "   target_link_libraries(freertos_kernel_port\n"
     "     PRIVATE\n"
+    "       freertos_kernel_port_headers\n"
     "       freertos_kernel_include)")
 endif()
 
-########################################################################
-# Overall Compile Options
-# Note the compile option strategy is to error on everything and then
-# Per library opt-out of things that are warnings/errors.
-# This ensures that no matter what strategy for compilation you take, the
-# builds will still occur.
-#
-# Only tested with GNU and Clang.
-# Other options are https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID
-# Naming of compilers translation map:
-#
-#   FreeRTOS    | CMake
-#   -------------------
-#   CCS         | ?TBD?
-#   GCC         | GNU, Clang, *Clang Others?
-#   IAR         | IAR
-#   Keil        | ARMCC
-#   MSVC        | MSVC # Note only for MinGW?
-#   Renesas     | ?TBD?
-
-add_compile_options(
-    ### Gnu/Clang C Options
-    $<$<COMPILE_LANG_AND_ID:C,GNU>:-fdiagnostics-color=always>
-    $<$<COMPILE_LANG_AND_ID:C,Clang>:-fcolor-diagnostics>
-
-    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wall>
-    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wextra>
-    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wpedantic>
-    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Werror>
-    $<$<COMPILE_LANG_AND_ID:C,Clang>:-Weverything>
-
-    # TODO: Add in other Compilers here.
-)
-
+add_library(freertos_kernel STATIC)
 
 ########################################################################
 add_subdirectory(include)
 add_subdirectory(portable)
 
-add_library(freertos_kernel STATIC
+target_sources(freertos_kernel PRIVATE
     croutine.c
     event_groups.c
     list.c
@@ -275,15 +249,24 @@ add_library(freertos_kernel STATIC
     stream_buffer.c
     tasks.c
     timers.c
-
-    # If FREERTOS_HEAP is digit between 1 .. 5 - it is heap number, otherwise - it is path to custom heap source file
-    $<IF:$<BOOL:$<FILTER:${FREERTOS_HEAP},EXCLUDE,^[1-5]$>>,${FREERTOS_HEAP},portable/MemMang/heap_${FREERTOS_HEAP}.c>
 )
+
+if (DEFINED FREERTOS_HEAP )
+    # User specified a heap implementation add heap implementation to freertos_kernel.
+    target_sources(freertos_kernel PRIVATE
+        # If FREERTOS_HEAP is digit between 1 .. 5 - it is heap number, otherwise - it is path to custom heap source file
+        $<IF:$<BOOL:$<FILTER:${FREERTOS_HEAP},EXCLUDE,^[1-5]$>>,${FREERTOS_HEAP},portable/MemMang/heap_${FREERTOS_HEAP}.c>
+    )
+endif()
+
 
 target_link_libraries(freertos_kernel
     PUBLIC
-        freertos_kernel_port
         freertos_kernel_include
+        freertos_kernel_port_headers
+    PRIVATE
+        freertos_kernel_port
+
 )
 
 ########################################################################
