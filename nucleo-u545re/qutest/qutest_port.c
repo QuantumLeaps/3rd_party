@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for NUCLEO-U545RE-Q board
-// Last updated for version 8.0.0
-// Last updated on  2024-06-24
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -35,14 +33,16 @@
 
 #define QP_IMPL        // this is QP implementation
 #include "qp_port.h"   // QP port
-#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 #include "qs_port.h"   // QS port
 #include "qs_pkg.h"    // QS package-scope interface
+#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
 #include "stm32u545xx.h"  // CMSIS-compliant header file for the MCU used
 // add other drivers if necessary...
 
-// Local-scope defines -----------------------------------------------------
+//Q_DEFINE_THIS_MODULE("qutest_port")
+
+// Local-scope defines -------------------------------------------------------
 // LED pins available on the board (just one user LED LD2--Green on PA.5)
 #define LD2_PIN  5U
 
@@ -98,7 +98,7 @@ static uint16_t const QS_UARTPrescTable[12] = {
 #define USART1_RX_PIN 10U
 
 //............................................................................
-uint8_t QS_onStartup(void const* arg) {
+uint8_t QS_onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
@@ -269,13 +269,3 @@ void QS_onTestLoop() {
     // which can happen through the calls to QS_TEST_PAUSE().
     QS_rxPriv_->inTestLoop = true;
 }
-//============================================================================
-// NOTE0:
-// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
-// consequently *all* interrupts are "kernel-aware". This means that
-// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
-// perform QS-TX). That can lead to lost some of the received bytes, and
-// consequently some QUTest tests might be failing.
-// A fix for that would be to use DMA for handling QS-RX, but this is
-// currently not implemented.
-//

@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for NUCLEO-C031C6 board
-// Last updated for version 8.0.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -35,9 +33,9 @@
 
 #define QP_IMPL        // this is QP implementation
 #include "qp_port.h"   // QP port
-#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 #include "qs_port.h"   // QS port
 #include "qs_pkg.h"    // QS package-scope interface
+#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
 #include "stm32c0xx.h"  // CMSIS-compliant header file for the MCU used
 // add other drivers if necessary...
@@ -85,12 +83,14 @@ void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
 }
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 uint8_t QS_onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
-    QS_initBuf  (qsTxBuf, sizeof(qsTxBuf));
+    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -217,6 +217,7 @@ void QS_onTestLoop() {
     // which can happen through the calls to QS_TEST_PAUSE().
     QS_rxPriv_->inTestLoop = true;
 }
+
 //============================================================================
 // NOTE0:
 // ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and

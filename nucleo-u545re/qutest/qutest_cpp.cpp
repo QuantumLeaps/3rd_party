@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for NUCLEO-U545RE-Q board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-24
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -277,13 +275,3 @@ void QS::onTestLoop() {
     // which can happen through the calls to QS_TEST_PAUSE().
     rxPriv_.inTestLoop = true;
 }
-//============================================================================
-// NOTE0:
-// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
-// consequently *all* interrupts are "kernel-aware". This means that
-// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
-// perform QS-TX). That can lead to lost some of the received bytes, and
-// consequently some QUTest tests might be failing.
-// A fix for that would be to use DMA for handling QS-RX, but this is
-// currently not implemented.
-//

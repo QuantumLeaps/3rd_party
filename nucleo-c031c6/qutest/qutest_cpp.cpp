@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for STM32 NUCLEO-C031C6 board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -91,12 +89,15 @@ void assert_failed(char const * const module, int_t const id) {
 
 } // extern "C"
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
+//............................................................................
 bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
     static std::uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
-    initBuf  (qsTxBuf, sizeof(qsTxBuf));
+    initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static std::uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -223,6 +224,7 @@ void QS::onTestLoop() {
     // which can happen through the calls to QS_TEST_PAUSE().
     rxPriv_.inTestLoop = true;
 }
+
 //============================================================================
 // NOTE0:
 // ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and

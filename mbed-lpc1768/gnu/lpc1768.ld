@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Linker script for STM32H743xx, GNU-ARM linker
+* Linker script for LPC1768, GNU-ARM linker
 *
 * Copyright (C) 2005 Quantum Leaps, LLC. All rights reserved.
 *
@@ -30,17 +30,16 @@ OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(Reset_Handler) /* entry Point */
 
-MEMORY { /* memory map of STM32H743ZI */
-    ROM (rx)   : ORIGIN = 0x08000000, LENGTH = 2048K
-    RAM (xrw)  : ORIGIN = 0x24000000, LENGTH = 512K
-    RAM2 (xrw) : ORIGIN = 0x20000000, LENGTH = 128K
-    RAM3 (xrw) : ORIGIN = 0x30000000, LENGTH = 288K
-    RAM4 (xrw) : ORIGIN = 0x38000000, LENGTH = 64K
-    RAM5 (xrw) : ORIGIN = 0x38800000, LENGTH = 4K
+MEMORY { /* memory map of LPC1768 */
+    ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 512K
+    RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x7FDF
+
+    USB_RAM(rwx) : ORIGIN = 0x2007C000, LENGTH = 16K
+    ETH_RAM(rwx) : ORIGIN = 0x20080000, LENGTH = 16K
 }
 
 /* The size of the stack used by the application. NOTE: you need to adjust  */
-STACK_SIZE = 4K;
+STACK_SIZE = 2048;
 
 /* The size of the heap used by the application. NOTE: you need to adjust   */
 HEAP_SIZE = 0;
@@ -122,6 +121,14 @@ SECTIONS {
     } >ROM
 
     /* RAM ------------------------------------------------------------*/
+    .stack : {
+        . = ALIGN(8);
+        __stack_start__ = .;
+        . = . + STACK_SIZE;
+        . = ALIGN(4);
+        __stack_end__ = .;
+        . = ALIGN(8);
+    } >RAM
 
     /* Used by the startup to initialize data */
     __data_load = LOADADDR(.data);
@@ -154,17 +161,6 @@ SECTIONS {
        _ebss = __bss_end__;
     } >RAM
 
-    /* RAM2 -----------------------------------------------------------*/
-    .stack : {
-        . = ALIGN(8);
-        __stack_start__ = .;
-        . = . + STACK_SIZE;
-        . = ALIGN(4);
-        __stack_end__ = .;
-        . = ALIGN(8);
-    } >RAM2
-
-    /* RAM3 -----------------------------------------------------------*/
     .heap : {
         . = ALIGN(8);
         PROVIDE ( end = . );
@@ -174,7 +170,7 @@ SECTIONS {
         . = ALIGN(4);
         __heap_end__ = .;
         . = ALIGN(8);
-    } >RAM3
+    } >RAM
 
     /* Remove information from the standard libraries */
     /DISCARD/ : {

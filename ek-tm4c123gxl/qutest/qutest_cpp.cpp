@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for EK-TM4C123GXL board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -67,6 +65,7 @@ extern "C" void UART0_IRQHandler(void); // prototype
 
 //............................................................................
 extern "C" {
+
 // ISR for receiving bytes from the QSPY Back-End
 // NOTE: This ISR is "QF-unaware" meaning that it does not interact with
 // the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
@@ -80,6 +79,7 @@ void UART0_IRQHandler(void) {
     }
 }
 
+//............................................................................
 void assert_failed(char const * const module, int_t const id); // prototype
 void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
@@ -87,7 +87,9 @@ void assert_failed(char const * const module, int_t const id) {
 
 } // extern "C"
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
