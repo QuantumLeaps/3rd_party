@@ -1,7 +1,5 @@
 //============================================================================
-// Product: QUTEST port for the MSP-EXP430F5529LP board
-// Last updated for version 8.0.0
-// Last updated on  2024-06-11
+// Product: QUTEST port for MSP-EXP430F5529LP board
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -35,9 +33,9 @@
 
 #define QP_IMPL        // this is QP implementation
 #include "qp_port.h"   // QP port
-#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 #include "qs_port.h"   // QS port
 #include "qs_pkg.h"    // QS package-scope interface
+#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
 #include <msp430f5529.h>  // MSP430 variant used
 // add other drivers if necessary...
@@ -76,7 +74,9 @@
     }
 }
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 uint8_t QS_onStartup(void const *arg) {
     static uint8_t qsBuf[256];  // buffer for QS; RAM is tight!
     static uint8_t qsRxBuf[80]; // buffer for QS receive channel
@@ -147,10 +147,7 @@ void QS_onReset(void) {
 //............................................................................
 void QS_doOutput(void) {
     if ((UCA1STAT & UCBUSY) == 0U) { // TX NOT busy?
-
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {
             UCA1TXBUF = (uint8_t)b; // stick the byte to the TX BUF
@@ -172,10 +169,7 @@ void QS_onTestLoop() {
         QS_rxParse();  // parse all the received bytes
 
         if ((UCA1STAT & UCBUSY) == 0U) { // TX NOT busy?
-
-            QF_INT_DISABLE();
             uint16_t b = QS_getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {
                 UCA1TXBUF = (uint8_t)b; // stick the byte to the TX BUF

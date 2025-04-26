@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for STM32 NUCLEO-H743ZI board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -68,6 +66,7 @@ void USART3_IRQHandler(void) { // kernel-unaware interrupt
     }
 }
 
+//............................................................................
 void assert_failed(char const * const module, int_t const id); // prototype
 void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
@@ -75,7 +74,9 @@ void assert_failed(char const * const module, int_t const id) {
 
 } // extern "C"
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
@@ -120,7 +121,7 @@ void QS::onCleanup(void) {
 // No critical section in QS::onFlush() to avoid nesting of critical sections
 // in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
-   for (;;) {
+    for (;;) {
         std::uint16_t b = getByte();
         if (b != QS_EOD) { // not End-Of-Data?
             // busy-wait as long as UART-TX not ready
@@ -134,17 +135,14 @@ void QS::onFlush(void) {
     }
 }
 //............................................................................
-//! callback function to reset the target (to be implemented in the BSP)
+// callback function to reset the target (to be implemented in the BSP)
 void QS::onReset(void) {
     NVIC_SystemReset();
 }
 //............................................................................
 void QS::doOutput(void) {
     if ((USART3->ISR & UART_FLAG_TXE) != 0U) { // TXE empty?
-
-        QF_INT_DISABLE();
         std::uint16_t b = getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
             USART3->TDR = static_cast<std::uint8_t>(b);
@@ -159,10 +157,7 @@ void QS::onTestLoop() {
         rxParse();  // parse all the received bytes
 
         if ((USART3->ISR & UART_FLAG_TXE) != 0U) {
-
-            QF_INT_DISABLE();
             std::uint16_t b = getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) { // not End-Of-Data?
                 USART3->TDR = static_cast<std::uint8_t>(b);

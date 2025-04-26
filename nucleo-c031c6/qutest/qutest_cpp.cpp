@@ -175,7 +175,7 @@ void QS::onFlush(void) {
         if (b != QS_EOD) {
             while ((USART2->ISR & (1U << 7U)) == 0U) {
             }
-            USART2->TDR = static_cast<std::uint8_t>(b); // put into the DR register
+            USART2->TDR = static_cast<std::uint8_t>(b);
         }
         else {
             break;
@@ -190,9 +190,7 @@ void QS::onReset(void) {
 //............................................................................
 void QS::doOutput(void) {
     if ((USART2->ISR & (1U << 7U)) != 0U) { // is TXE empty?
-        QF_INT_DISABLE();
         std::uint16_t b = getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {   // not End-Of-Data?
             USART2->TDR = static_cast<std::uint8_t>(b);
@@ -211,9 +209,7 @@ void QS::onTestLoop() {
         rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
-            QF_INT_DISABLE();
             uint16_t b = getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {  // not End-Of-Data?
                 USART2->TDR = static_cast<std::uint8_t>(b);

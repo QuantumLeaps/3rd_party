@@ -183,9 +183,7 @@ void QS_onReset(void) {
 //............................................................................
 void QS_doOutput(void) {
     if ((USART2->ISR & (1U << 7U)) != 0U) { // is TXE empty?
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {   // not End-Of-Data?
             USART2->TDR = (uint8_t)b;
@@ -204,9 +202,7 @@ void QS_onTestLoop() {
         QS_rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
-            QF_INT_DISABLE();
             uint16_t b = QS_getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {  // not End-Of-Data?
                 USART2->TDR = (uint8_t)b;

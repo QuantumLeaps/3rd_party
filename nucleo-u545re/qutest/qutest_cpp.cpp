@@ -234,10 +234,7 @@ void QS::onReset(void) {
 void QS::doOutput(void) {
     // while Transmit Data Register Empty or TX-FIFO Not Full
     while ((USART1->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {
-        QF_INT_DISABLE();
         std::uint16_t b = getByte();
-        QF_INT_ENABLE();
-
         if (b != QS_EOD) {   // not End-Of-Data?
             USART1->TDR = b; // put into the DR register
         }
@@ -259,10 +256,7 @@ void QS::onTestLoop() {
 
         // while Transmit Data Register Empty or TX-FIFO Not Full
         while ((USART1->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {
-            QF_INT_DISABLE();
             std::uint16_t b = getByte();
-            QF_INT_ENABLE();
-
             if (b != QS_EOD) {   // not End-Of-Data?
                 USART1->TDR = b; // put into the DR register
             }
