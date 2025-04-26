@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for MSP-EXP430F5529LP board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -81,10 +79,12 @@ extern "C" {
 
 } // extern "C"
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 bool QS::onStartup(void const *arg) {
-    static uint8_t qsBuf[256];  // buffer for QS; RAM is tight!
-    static uint8_t qsRxBuf[80]; // buffer for QS receive channel
+    static std::uint8_t qsBuf[256];  // buffer for QS; RAM is tight!
+    static std::uint8_t qsRxBuf[80]; // buffer for QS receive channel
     //uint16_t tmp;
 
     WDTCTL = WDTPW | WDTHOLD; // stop watchdog timer
@@ -154,8 +154,8 @@ void QS::onTestLoop() {
 
     __enable_interrupt();  // IMPORTANT: enable global interrupts
 
-    rxPriv_.inTestLoop = true;
-    while (rxPriv_.inTestLoop) {
+    tstPriv_.inTestLoop = true;
+    while (tstPriv_.inTestLoop) {
 
         // toggle the User LED on and then off, see NOTE01
         P4OUT |=  LED2;  // turn LED2 on
@@ -164,10 +164,7 @@ void QS::onTestLoop() {
         rxParse();  // parse all the received bytes
 
         if ((UCA1STAT & UCBUSY) == 0U) { // TX NOT busy?
-
-            QF_INT_DISABLE();
             std::uint16_t b = getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {
                 UCA1TXBUF = static_cast<std::uint8_t>(b);
@@ -176,5 +173,5 @@ void QS::onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    rxPriv_.inTestLoop = true;
+    tstPriv_.inTestLoop = true;
 }

@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for the STM32 NUCLEO-L053R8 board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -75,7 +73,6 @@ extern "C" {
 // NOTE: This ISR is "QF-unaware" meaning that it does not interact with
 // the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
 // QK_ISR_EXIT and they cannot post or publish events.
-//
 void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrupt)
     // is RX register NOT empty?
     while ((USART2->ISR & (1U << 5)) != 0) {
@@ -84,6 +81,7 @@ void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrupt)
     }
 }
 
+//............................................................................
 void assert_failed(char const * const module, int_t const id); // prototype
 void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
@@ -91,7 +89,9 @@ void assert_failed(char const * const module, int_t const id) {
 
 } // extern "C"
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
@@ -103,7 +103,6 @@ bool QS::onStartup(void const *arg) {
 
     // NOTE: SystemInit() already called from the startup code
     //  but SystemCoreClock needs to be updated
-    //
     SystemCoreClockUpdate();
 
     // enable GPIOA clock port for the LED LD2
@@ -190,10 +189,7 @@ void QS::onReset(void) {
 //............................................................................
 void QS::doOutput(void) {
     if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
-
-        QF_INT_DISABLE();
         std::uint16_t b = getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
             USART2->TDR = static_cast<std::uint8_t>(b);
@@ -202,8 +198,8 @@ void QS::doOutput(void) {
 }
 //............................................................................
 void QS::onTestLoop() {
-    rxPriv_.inTestLoop = true;
-    while (rxPriv_.inTestLoop) {
+    tstPriv_.inTestLoop = true;
+    while (tstPriv_.inTestLoop) {
 
         // toggle an LED LD2 on and then off (not enough LEDs, see NOTE02)
         GPIOA->BSRR = (1U << LD2_PIN);         // turn LED[n] on
@@ -212,10 +208,7 @@ void QS::onTestLoop() {
         rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
-
-            QF_INT_DISABLE();
             std::uint16_t b = getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {  // not End-Of-Data?
                 USART2->TDR = static_cast<std::uint8_t>(b);
@@ -224,15 +217,5 @@ void QS::onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    rxPriv_.inTestLoop = true;
+    tstPriv_.inTestLoop = true;
 }
-//============================================================================
-// NOTE0:
-// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
-// consequently *all* interrupts are "kernel-aware". This means that
-// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
-// perform QS-TX). That can lead to lost some of the received bytes, and
-// consequently some QUTest tests might be failing.
-// A fix for that would be to use DMA for handling QS-RX, but this is
-// currently not implemented.
-//

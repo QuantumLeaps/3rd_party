@@ -1,7 +1,5 @@
 //============================================================================
-// Product: QUTEST port for the EMF32 Pearl Gecko board
-// Last updated for version 7.4.0
-// Last updated on  2024-06-11
+// Product: QUTEST port for EMF32 Pearl Gecko board
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -45,7 +43,7 @@
 #include "em_usart.h"  // USART (SiLabs)
 // add other drivers if necessary...
 
-//Q_DEFINE_THIS_MODULE("qutest_port");
+//Q_DEFINE_THIS_MODULE("qutest_port")
 
 using namespace QP;
 
@@ -73,12 +71,13 @@ extern "C" {
 //
 void USART0_RX_IRQHandler(void) {
     // while RX FIFO NOT empty
-    while ((l_USART0->STATUS & USART_STATUS_RXDATAV) != 0) {
+    while ((l_USART0->STATUS & USART_STATUS_RXDATAV) != 0U) {
         uint32_t b = l_USART0->RXDATA;
         QP::QS::rxPut(b);
     }
 }
 
+//............................................................................
 void assert_failed(char const * const module, int_t const id); // prototype
 void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
@@ -86,14 +85,16 @@ void assert_failed(char const * const module, int_t const id) {
 
 } // extern "C"
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
-    static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
-    initBuf  (qsTxBuf, sizeof(qsTxBuf));
+    static std::uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    initBuf(qsTxBuf, sizeof(qsTxBuf));
 
-    static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
+    static std::uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
 
     // Enable peripheral clocks
@@ -133,14 +134,14 @@ bool QS::onStartup(void const *arg) {
                            ~(_USART_ROUTELOC0_TXLOC_MASK
                            | _USART_ROUTELOC0_RXLOC_MASK));
 
-    // Enable the UART
+    // enable the UART
     USART_Enable(l_USART0, usartEnable);
 
     // Clear previous RX interrupts
     USART_IntClear(l_USART0, USART_IF_RXDATAV);
     NVIC_ClearPendingIRQ(USART0_RX_IRQn);
 
-    // Enable USART RX interrupts
+    // enable USART RX interrupts
     USART_IntEnable(l_USART0, USART_IF_RXDATAV);
 
     // explicitly set NVIC priorities of all Cortex-M interrupts used
@@ -166,7 +167,7 @@ void QS::onCleanup(void) {
 // No critical section in QS::onFlush() to avoid nesting of critical sections
 // in case QS_onFlush() is called from Q_onError().
 void QS::onFlush(void) {
-   for (;;) {
+    for (;;) {
         std::uint16_t b = getByte();
         if (b != QS_EOD) {
             while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
@@ -177,8 +178,6 @@ void QS::onFlush(void) {
             break;
         }
     }
-    while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
-    }
 }
 //............................................................................
 // callback function to reset the target (to be implemented in the BSP)
@@ -188,30 +187,28 @@ void QS::onReset(void) {
 //............................................................................
 void QS::doOutput(void) {
     if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0U) {  // is TXE empty?
-        QF_INT_DISABLE();
-        uint16_t b = getByte();
-        QF_INT_ENABLE();
+        std::uint16_t b = getByte();
 
         if (b != QS_EOD) {  // not End-Of-Data?
-            l_USART0->TXDATA = static_cast<std::uint8_t>(b);
+            l_USART0->TXDATA = b;
         }
     }
 }
 //............................................................................
 void QS::onTestLoop() {
-    rxPriv_.inTestLoop = true;
-    while (rxPriv_.inTestLoop) {
+    tstPriv_.inTestLoop = true;
+    while (tstPriv_.inTestLoop) {
 
         rxParse();  // parse all the received bytes
 
         if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0U) { // is TXE empty?
-            uint16_t b = getByte();
+            std::uint16_t b = getByte();
             if (b != QS_EOD) {  // not End-Of-Data?
-                l_USART0->TXDATA = static_cast<std::uint8_t>(b);
+                l_USART0->TXDATA = b;
             }
         }
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    rxPriv_.inTestLoop = true;
+    tstPriv_.inTestLoop = true;
 }

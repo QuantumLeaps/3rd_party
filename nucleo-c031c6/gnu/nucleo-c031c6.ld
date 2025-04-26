@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Linker script for STM32C031C6, GNU-ARM linker
 *
-* Copyright (C) 2005 Quantum Leaps, LLC. All rights reserved.
+* Copyright (C) 2005 Quantum Leaps, LLC <state-machine.com>.
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -9,20 +9,21 @@
 *
 * SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-QL-commercial
 *
-* This software is dual-licensed under the terms of the open-source GNU
-* General Public License (GPL) or under the terms of one of the closed-
-* source Quantum Leaps commercial licenses.
+* This software is dual-licensed under the terms of the open source GNU
+* General Public License version 3 (or any later version), or alternatively,
+* under the terms of one of the closed source Quantum Leaps commercial
+* licenses.
+*
+* The terms of the open source GNU General Public License version 3
+* can be found at: <www.gnu.org/licenses/gpl-3.0>
+*
+* The terms of the closed source Quantum Leaps commercial licenses
+* can be found at: <www.state-machine.com/licensing>
 *
 * Redistributions in source code must retain this top-level comment block.
 * Plagiarizing this software to sidestep the license obligations is illegal.
 *
-* NOTE:
-* The GPL does NOT permit the incorporation of this code into proprietary
-* programs. Please contact Quantum Leaps for commercial licensing options,
-* which expressly supersede the GPL and are designed explicitly for
-* closed-source distribution.
-*
-* Quantum Leaps contact information:
+* Contact information:
 * <www.state-machine.com/licensing>
 * <info@state-machine.com>
 *****************************************************************************/

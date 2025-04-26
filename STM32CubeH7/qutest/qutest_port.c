@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for STM32 NUCLEO-H743ZI board
-// Last updated for version 8.0.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -35,9 +33,9 @@
 
 #define QP_IMPL        // this is QP implementation
 #include "qp_port.h"   // QP port
-#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 #include "qs_port.h"   // QS port
 #include "qs_pkg.h"    // QS package-scope interface
+#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
 // STM32CubeH7 include files
 #include "stm32h7xx_hal.h"
@@ -70,12 +68,14 @@ void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
 }
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 uint8_t QS_onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
-    QS_initBuf  (qsTxBuf, sizeof(qsTxBuf));
+    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -121,7 +121,7 @@ void QS_onFlush(void) {
             // busy-wait as long as UART-TX not ready
             while ((USART3->ISR & UART_FLAG_TXE) == 0U) {
             }
-            USART3->TDR = (uint8_t)b;
+            USART3->TDR = b;
         }
         else {
             break;
@@ -136,35 +136,29 @@ void QS_onReset(void) {
 //............................................................................
 void QS_doOutput(void) {
     if ((USART3->ISR & UART_FLAG_TXE) != 0U) { // TXE empty?
-
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
-            USART3->TDR = (uint8_t)b;
+            USART3->TDR = b;
         }
     }
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_->inTestLoop = true;
-    while (QS_rxPriv_->inTestLoop) {
+    QS_tstPriv_.inTestLoop = true;
+    while (QS_tstPriv_.inTestLoop) {
 
         QS_rxParse();  // parse all the received bytes
 
         if ((USART3->ISR & UART_FLAG_TXE) != 0U) {
-
-            QF_INT_DISABLE();
             uint16_t b = QS_getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) { // not End-Of-Data?
-                USART3->TDR = (uint8_t)b;
+                USART3->TDR = b;
             }
         }
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_->inTestLoop = true;
+    QS_tstPriv_.inTestLoop = true;
 }

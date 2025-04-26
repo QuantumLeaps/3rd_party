@@ -101,11 +101,10 @@ bool QS::onStartup(void const *arg) {
 
     // NOTE: SystemInit() already called from the startup code
     //  but SystemCoreClock needs to be updated
-    //
     SystemCoreClockUpdate();
 
     // enable clock for to the peripherals used by this application...
-    SYSCTL->RCGCGPIO |= (1U << 5); // enable Run mode for GPIOF
+    SYSCTL->RCGCGPIO |= (1U << 5U); // enable Run mode for GPIOF
 
     // configure the LEDs and push buttons
     GPIOF->DIR |= (LED_RED | LED_GREEN | LED_BLUE);// set direction: output
@@ -120,11 +119,11 @@ bool QS::onStartup(void const *arg) {
                          GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     // enable clock for UART0 and GPIOA (used by UART0 pins)
-    SYSCTL->RCGCUART |= (1U << 0); // enable Run mode for UART0
-    SYSCTL->RCGCGPIO |= (1U << 0); // enable Run mode for GPIOA
+    SYSCTL->RCGCUART |= (1U << 0U); // enable Run mode for UART0
+    SYSCTL->RCGCGPIO |= (1U << 0U); // enable Run mode for GPIOA
 
     // configure UART0 pins for UART operation
-    std::uint32_t tmp = (1U << 0) | (1U << 1);
+    std::uint32_t tmp = (1U << 0U) | (1U << 1U);
     GPIOA->DIR   &= ~tmp;
     GPIOA->SLR   &= ~tmp;
     GPIOA->ODR   &= ~tmp;
@@ -140,22 +139,22 @@ bool QS::onStartup(void const *arg) {
     tmp = (((SystemCoreClock * 8U) / UART_BAUD_RATE) + 1U) / 2U;
     UART0->IBRD   = tmp / 64U;
     UART0->FBRD   = tmp % 64U;
-    UART0->LCRH   = (0x3U << 5); // configure 8-N-1 operation
-    UART0->LCRH  |= (0x1U << 4); // enable FIFOs
-    UART0->CTL    = (1U << 0)    // UART enable
-                    | (1U << 8)  // UART TX enable
-                    | (1U << 9); // UART RX enable
+    UART0->LCRH   = (0x3U << 5U); // configure 8-N-1 operation
+    UART0->LCRH  |= (0x1U << 4U); // enable FIFOs
+    UART0->CTL    = (1U << 0U)    // UART enable
+                    | (1U << 8U)  // UART TX enable
+                    | (1U << 9U); // UART RX enable
 
     // configure UART interrupts (for the RX channel)
-    UART0->IM   |= (1U << 4) | (1U << 6); // enable RX and RX-TO interrupt
-    UART0->IFLS |= (0x2U << 2);    // interrupt on RX FIFO half-full
+    UART0->IM   |= (1U << 4U) | (1U << 6U); // enable RX and RX-TO interrupt
+    UART0->IFLS |= (0x2U << 2U);    // interrupt on RX FIFO half-full
 
     // explicitly set NVIC priorities of all Cortex-M interrupts used
     NVIC_SetPriorityGrouping(0U);
     NVIC_SetPriority(UART0_IRQn, 0U); // kernel unaware interrupt
 
     // enable the UART RX interrupt...
-    NVIC_EnableIRQ(UART0_IRQn);  // UART0 interrupt used for QS-RX
+    NVIC_EnableIRQ(UART0_IRQn); // UART0 interrupt used for QS-RX
 
     return true; // return success
 }
@@ -181,7 +180,7 @@ void QS::onFlush(void) {
         while ((UART0->FR & UART_FR_TXFE) == 0) {
         }
 
-        while (fifo-- != 0) {     // any bytes in the block?
+        while (fifo-- != 0U) {    // any bytes in the block?
             UART0->DR = *block++; // put into the TX FIFO
         }
         fifo = UART_TXFIFO_DEPTH; // re-load the Tx FIFO depth
@@ -197,11 +196,7 @@ void QS::onReset(void) {
 void QS::doOutput(void) {
     if ((UART0->FR & UART_FR_TXFE) != 0U) {  // TX done?
         uint16_t fifo = UART_TXFIFO_DEPTH;   // max bytes we can accept
-        uint8_t const *block;
-
-        QF_INT_DISABLE();
-        block = getBlock(&fifo); // try to get next block to transmit
-        QF_INT_ENABLE();
+        uint8_t const *block = getBlock(&fifo); // the next block to send
 
         while (fifo-- != 0) {       // any bytes in the block?
             UART0->DR = *block++;   // put into the FIFO
@@ -210,22 +205,18 @@ void QS::doOutput(void) {
 }
 //............................................................................
 void QS::onTestLoop() {
-    rxPriv_.inTestLoop = true;
-    while (rxPriv_.inTestLoop) {
+    tstPriv_.inTestLoop = true;
+    while (tstPriv_.inTestLoop) {
 
-
-        // turn the LED1 on and off (glow)
-       GPIOF->DATA_Bits[LED_BLUE] = LED_BLUE;  // turn the Blue LED on
-       GPIOF->DATA_Bits[LED_BLUE] = 0U;        // turn the Blue LED off
+        // toggle the User LED on and then off
+        GPIOF->DATA_Bits[LED_BLUE] = LED_BLUE;  // turn the Blue LED on
+        GPIOF->DATA_Bits[LED_BLUE] = 0U;        // turn the Blue LED off
 
         rxParse();  // parse all the received bytes
 
         if ((UART0->FR & UART_FR_TXFE) != 0U) {  // TX done?
             std::uint16_t fifo = UART_TXFIFO_DEPTH; // max bytes we can accept
-            std::uint8_t const *block;
-
-
-            block = getBlock(&fifo);  // try to get next block to transmit
+            std::uint8_t const *block = getBlock(&fifo);  // the next block
 
             while (fifo-- != 0) {     // any bytes in the block?
                 UART0->DR = *block++; // put into the FIFO
@@ -234,5 +225,5 @@ void QS::onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    rxPriv_.inTestLoop = true;
+    tstPriv_.inTestLoop = true;
 }

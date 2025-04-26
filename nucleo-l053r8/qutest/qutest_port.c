@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for NUCLEO-L053R8 board
-// Last updated for version 8.0.0
-// Last updated on  2024-06-11
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -35,9 +33,9 @@
 
 #define QP_IMPL        // this is QP implementation
 #include "qp_port.h"   // QP port
-#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 #include "qs_port.h"   // QS port
 #include "qs_pkg.h"    // QS package-scope interface
+#include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
 #include "stm32l0xx.h"  // CMSIS-compliant header file for the MCU used
 // add other drivers if necessary...
@@ -71,7 +69,6 @@ void USART2_IRQHandler(void);
 // NOTE: This ISR is "QF-unaware" meaning that it does not interact with
 // the QF/QK and is not disabled. Such ISRs don't need to call QK_ISR_ENTRY/
 // QK_ISR_EXIT and they cannot post or publish events.
-//
 void USART2_IRQHandler(void) { // used in QS-RX (see NOTE0)
     // is RX register NOT empty?
     while ((USART2->ISR & (1U << 5U)) != 0U) {
@@ -86,12 +83,14 @@ void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
 }
 
-// QS callbacks ==============================================================
+//============================================================================
+// QS callbacks...
+
 uint8_t QS_onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
-    QS_initBuf  (qsTxBuf, sizeof(qsTxBuf));
+    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -125,10 +124,10 @@ uint8_t QS_onStartup(void const *arg) {
     RCC->APB1ENR |= ( 1U << 17U);  // Enable USART#2 clock
 
     // Configure PA3 to USART2_RX, PA2 to USART2_TX
-    GPIOA->AFR[0] &= ~((15U << 4U*USART2_RX_PIN) | (15U << 4U*USART2_TX_PIN) );
-    GPIOA->AFR[0] |=  (( 4U << 4U*USART2_RX_PIN) | ( 4U << 4U*USART2_TX_PIN) );
-    GPIOA->MODER  &= ~(( 3U << 2U*USART2_RX_PIN) | ( 3U << 2U*USART2_TX_PIN) );
-    GPIOA->MODER  |=  (( 2U << 2U*USART2_RX_PIN) | ( 2U << 2U*USART2_TX_PIN) );
+    GPIOA->AFR[0] &= ~((15U << 4U*USART2_RX_PIN) | (15U << 4U*USART2_TX_PIN));
+    GPIOA->AFR[0] |=  (( 4U << 4U*USART2_RX_PIN) | ( 4U << 4U*USART2_TX_PIN));
+    GPIOA->MODER  &= ~(( 3U << 2U*USART2_RX_PIN) | ( 3U << 2U*USART2_TX_PIN));
+    GPIOA->MODER  |=  (( 2U << 2U*USART2_RX_PIN) | ( 2U << 2U*USART2_TX_PIN));
 
     USART2->BRR  = __USART_BRR(SystemCoreClock, 115200U);  // baud rate
     USART2->CR3  = 0x0000U |      // no flow control
@@ -143,12 +142,12 @@ uint8_t QS_onStartup(void const *arg) {
 
     // explicitly set NVIC priorities of all Cortex-M interrupts used
     NVIC_SetPriorityGrouping(0U);
-    NVIC_SetPriority(USART2_IRQn,    0U);
+    NVIC_SetPriority(USART2_IRQn, 0U);
 
     // enable the UART RX interrupt...
     NVIC_EnableIRQ(USART2_IRQn); // UART2 interrupt used for QS-RX
 
-    return 1U; // return success
+    return 1U; // success
 }
 //............................................................................
 void QS_onCleanup(void) {
@@ -169,7 +168,7 @@ void QS_onFlush(void) {
         if (b != QS_EOD) {
             while ((USART2->ISR & (1U << 7U)) == 0U) {
             }
-            USART2->TDR  = (uint8_t)b;
+            USART2->TDR = (uint8_t)b;
         }
         else {
             break;
@@ -184,9 +183,7 @@ void QS_onReset(void) {
 //............................................................................
 void QS_doOutput(void) {
     if ((USART2->ISR & (1U << 7U)) != 0U) { // is TXE empty?
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
             USART2->TDR = (uint8_t)b;
@@ -195,8 +192,8 @@ void QS_doOutput(void) {
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_->inTestLoop = true;
-    while (QS_rxPriv_->inTestLoop) {
+    QS_tstPriv_.inTestLoop = true;
+    while (QS_tstPriv_.inTestLoop) {
 
         // toggle an LED LD2 on and then off (not enough LEDs, see NOTE02)
         GPIOA->BSRR = (1U << LD2_PIN);         // turn LED[n] on
@@ -205,9 +202,7 @@ void QS_onTestLoop() {
         QS_rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
-            QF_INT_DISABLE();
             uint16_t b = QS_getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {  // not End-Of-Data?
                 USART2->TDR = (uint8_t)b;
@@ -216,15 +211,5 @@ void QS_onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_->inTestLoop = true;
+    QS_tstPriv_.inTestLoop = true;
 }
-//============================================================================
-// NOTE0:
-// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
-// consequently *all* interrupts are "kernel-aware". This means that
-// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
-// perform QS-TX). That can lead to lost some of the received bytes, and
-// consequently some QUTest tests might be failing.
-// A fix for that would be to use DMA for handling QS-RX, but this is
-// currently not implemented.
-//

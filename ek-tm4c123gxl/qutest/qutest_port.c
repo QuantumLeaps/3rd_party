@@ -144,7 +144,6 @@ uint8_t QS_onStartup(void const *arg) {
     // configure UART interrupts (for the RX channel)
     UART0->IM   |= (1U << 4U) | (1U << 6U); // enable RX and RX-TO interrupt
     UART0->IFLS |= (0x2U << 2U);    // interrupt on RX FIFO half-full
-    // NOTE: do not enable the UART0 interrupt yet. Wait till QF_onStartup()
 
     // explicitly set NVIC priorities of all Cortex-M interrupts used
     NVIC_SetPriorityGrouping(0U);
@@ -177,7 +176,7 @@ void QS_onFlush(void) {
         while ((UART0->FR & UART_FR_TXFE) == 0) {
         }
 
-        while (fifo-- != 0) {    // any bytes in the block?
+        while (fifo-- != 0U) {    // any bytes in the block?
             UART0->DR = *block++; // put into the TX FIFO
         }
         fifo = UART_TXFIFO_DEPTH; // re-load the Tx FIFO depth
@@ -193,11 +192,7 @@ void QS_onReset(void) {
 void QS_doOutput(void) {
     if ((UART0->FR & UART_FR_TXFE) != 0U) {  // TX done?
         uint16_t fifo = UART_TXFIFO_DEPTH;   // max bytes we can accept
-        uint8_t const *block;
-
-        QF_INT_DISABLE();
-        block = QS_getBlock(&fifo); // try to get next block to transmit
-        QF_INT_ENABLE();
+        uint8_t const *block = QS_getBlock(&fifo); // the next block to send
 
         while (fifo-- != 0) {       // any bytes in the block?
             UART0->DR = *block++;   // put into the FIFO
@@ -206,10 +201,10 @@ void QS_doOutput(void) {
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_->inTestLoop = true;
-    while (QS_rxPriv_->inTestLoop) {
+    QS_tstPriv_.inTestLoop = true;
+    while (QS_tstPriv_.inTestLoop) {
 
-        // toggle the User LED on and then off, see NOTE01
+        // toggle the User LED on and then off
         GPIOF->DATA_Bits[LED_BLUE] = LED_BLUE;  // turn the Blue LED on
         GPIOF->DATA_Bits[LED_BLUE] = 0U;        // turn the Blue LED off
 
@@ -217,11 +212,7 @@ void QS_onTestLoop() {
 
         if ((UART0->FR & UART_FR_TXFE) != 0U) {  // TX done?
             uint16_t fifo = UART_TXFIFO_DEPTH;   // max bytes we can accept
-            uint8_t const *block;
-
-            QF_INT_DISABLE();
-            block = QS_getBlock(&fifo); // try to get next block to transmit
-            QF_INT_ENABLE();
+            uint8_t const *block = QS_getBlock(&fifo); // the next block
 
             while (fifo-- != 0) {       // any bytes in the block?
                 UART0->DR = *block++;   // put into the FIFO
@@ -230,5 +221,5 @@ void QS_onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_->inTestLoop = true;
+    QS_tstPriv_.inTestLoop = true;
 }

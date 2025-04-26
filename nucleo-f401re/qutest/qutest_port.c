@@ -1,7 +1,5 @@
 //============================================================================
 // Product: QUTEST port for NUCLEO-F401RE board
-// Last updated for version 8.0.0
-// Last updated on  2024-11-08
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
@@ -122,7 +120,7 @@ uint8_t QS_onStartup(void const *arg) {
     // enable the UART RX interrupt...
     NVIC_EnableIRQ(USART2_IRQn); // UART2 interrupt used for QS-RX
 
-    return 1U; // return success
+    return 1U; // success
 }
 //............................................................................
 void QS_onCleanup(void) {
@@ -159,9 +157,7 @@ void QS_onReset(void) {
 void QS_doOutput(void) {
     // while Transmit Data Register Empty
     while ((USART2->SR & USART_SR_TXE) != 0) { // TXE empty?
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {  // not End-Of-Data?
             USART2->DR = b; // put into the DR register
@@ -173,8 +169,8 @@ void QS_doOutput(void) {
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_->inTestLoop = true;
-    while (QS_rxPriv_->inTestLoop) {
+    QS_tstPriv_.inTestLoop = true;
+    while (QS_tstPriv_.inTestLoop) {
 
         // toggle an LED LD2 on and then off (not enough LEDs, see NOTE02)
         GPIOA->BSRR = (1U << LD2_PIN); // turn LD2 on
@@ -184,9 +180,7 @@ void QS_onTestLoop() {
 
         // while Transmit Data Register not empty
         while ((USART2->SR & USART_SR_TXE) != 0) { // TXE empty?
-            QF_INT_DISABLE();
             uint16_t b = QS_getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {  // not End-Of-Data?
                 USART2->DR = b; // put into the DR register
@@ -198,15 +192,5 @@ void QS_onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_->inTestLoop = true;
+    QS_tstPriv_.inTestLoop = true;
 }
-//============================================================================
-// NOTE0:
-// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
-// consequently *all* interrupts are "kernel-aware". This means that
-// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
-// perform QS-TX). That can lead to lost some of the received bytes, and
-// consequently some QUTest tests might be failing.
-// A fix for that would be to use DMA for handling QS-RX, but this is
-// currently not implemented.
-//

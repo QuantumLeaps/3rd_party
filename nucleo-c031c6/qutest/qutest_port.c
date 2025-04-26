@@ -183,9 +183,7 @@ void QS_onReset(void) {
 //............................................................................
 void QS_doOutput(void) {
     if ((USART2->ISR & (1U << 7U)) != 0U) { // is TXE empty?
-        QF_INT_DISABLE();
         uint16_t b = QS_getByte();
-        QF_INT_ENABLE();
 
         if (b != QS_EOD) {   // not End-Of-Data?
             USART2->TDR = (uint8_t)b;
@@ -194,8 +192,8 @@ void QS_doOutput(void) {
 }
 //............................................................................
 void QS_onTestLoop() {
-    QS_rxPriv_->inTestLoop = true;
-    while (QS_rxPriv_->inTestLoop) {
+    QS_tstPriv_.inTestLoop = true;
+    while (QS_tstPriv_.inTestLoop) {
 
         // toggle an LED LD2 on and then off (not enough LEDs, see NOTE02)
         GPIOA->BSRR = (1U << LD4_PIN);         // turn LED[n] on
@@ -204,9 +202,7 @@ void QS_onTestLoop() {
         QS_rxParse();  // parse all the received bytes
 
         if ((USART2->ISR & (1U << 7U)) != 0U) {  // is TXE empty?
-            QF_INT_DISABLE();
             uint16_t b = QS_getByte();
-            QF_INT_ENABLE();
 
             if (b != QS_EOD) {  // not End-Of-Data?
                 USART2->TDR = (uint8_t)b;
@@ -215,16 +211,5 @@ void QS_onTestLoop() {
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,
     // which can happen through the calls to QS_TEST_PAUSE().
-    QS_rxPriv_->inTestLoop = true;
+    QS_tstPriv_.inTestLoop = true;
 }
-
-//============================================================================
-// NOTE0:
-// ARM Cortex-M0+ does NOT provide "kernel-unaware" interrupts, and
-// consequently *all* interrupts are "kernel-aware". This means that
-// the UART interrupt used for QS-RX is frequently DISABLED (e.g., to
-// perform QS-TX). That can lead to lost some of the received bytes, and
-// consequently some QUTest tests might be failing.
-// A fix for that would be to use DMA for handling QS-RX, but this is
-// currently not implemented.
-//
