@@ -38,7 +38,6 @@
 #include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
 #include "TM4C123GH6PM.h"  // the device specific header (TI)
-#include "rom.h"           // the built-in ROM functions (TI)
 #include "sysctl.h"        // system control driver (TI)
 #include "gpio.h"          // GPIO driver (TI)
 // add other drivers if necessary...
@@ -94,7 +93,7 @@ bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
-    initBuf  (qsTxBuf, sizeof(qsTxBuf));
+    initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
@@ -112,11 +111,6 @@ bool QS::onStartup(void const *arg) {
     GPIOF->DATA_Bits[LED_RED]   = 0U; // turn the LED off
     GPIOF->DATA_Bits[LED_GREEN] = 0U; // turn the LED off
     GPIOF->DATA_Bits[LED_BLUE]  = 0U; // turn the LED off
-
-    // configure the Buttons
-    GPIOF->DIR &= ~(BTN_SW1 | BTN_SW2); //  set direction: input
-    ROM_GPIOPadConfigSet(GPIOF_BASE, (BTN_SW1 | BTN_SW2),
-                         GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     // enable clock for UART0 and GPIOA (used by UART0 pins)
     SYSCTL->RCGCUART |= (1U << 0U); // enable Run mode for UART0
