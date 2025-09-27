@@ -27,7 +27,7 @@
 *                                             ARMv6-M Port
 *
 * Filename  : os_cpu.h
-* Version   : V2.93.00
+* Version   : V2.93.01
 *********************************************************************************************************
 * For       : ARMv6-M Cortex-M0 or Cortex-M0+
 * Mode      : Thumb2

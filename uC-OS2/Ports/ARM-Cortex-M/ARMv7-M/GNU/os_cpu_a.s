@@ -2,7 +2,7 @@
 @                                              uC/OS-II
 @                                        The Real-Time Kernel
 @
-@                    Copyright 1992-2020 Silicon Laboratories Inc. www.silabs.com
+@                    Copyright 1992-2021 Silicon Laboratories Inc. www.silabs.com
 @
 @                                 SPDX-License-Identifier: APACHE-2.0
 @
@@ -12,10 +12,14 @@
 @
 @********************************************************************************************************
 @ Modified from the original to interoperate with CMIS as follows:
-@ - renamed OS_CPU_PendSVHandler to CMSIS-compatible name PendSV_Handler
+@ - renamed OS_CPU_PendSVHandler to CMSIS-compatible name PendSV_Handler (2020-06-01)
+@
+@ - added '.type <nam>, %function' to all functions, as required since binutils version 2.44 (2025-09-27)
+@   (fixes the GNU linker error: "dangerous relocation: unsupported relocation")
+@
+@ GitHub repo: https://github.com/QuantumLeaps/uC-OS2
 @
 @ Quantum Leaps, LLC. www.state-machine.com
-@ 2020-06-01
 @********************************************************************************************************
 
 @********************************************************************************************************
@@ -23,7 +27,7 @@
 @                                             ARMv7-M Port
 @
 @ Filename  : os_cpu_a.S
-@ Version   : V2.93.00
+@ Version   : V2.93.01
 @********************************************************************************************************
 @ For       : ARMv7-M Cortex-M
 @ Mode      : Thumb-2 ISA
@@ -96,7 +100,8 @@
 
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
 
-.thumb_func
+   .type OS_CPU_FP_Reg_Push, %function
+   .thumb_func
 OS_CPU_FP_Reg_Push:
     MRS     R1, PSP                                             @ PSP is process stack pointer
     CBZ     R1, OS_CPU_FP_nosave                                @ Skip FP register save the first time
@@ -123,7 +128,8 @@ OS_CPU_FP_nosave:
 
 #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
 
-.thumb_func
+   .type OS_CPU_FP_Reg_Pop, %function
+   .thumb_func
 OS_CPU_FP_Reg_Pop:
     VLDMIA  R0!, {S16-S31}
     LDR     R1, =OSTCBHighRdy
@@ -177,7 +183,8 @@ OS_CPU_FP_Reg_Pop:
 @                      CPSIE i
 @********************************************************************************************************
 
-.thumb_func
+   .type OS_CPU_SR_Save, %function
+   .thumb_func
 OS_CPU_SR_Save:
     CPSID   I                                   @ Cortex-M7 errata notice. See Note #2
     PUSH   {R1}
@@ -190,7 +197,8 @@ OS_CPU_SR_Save:
     CPSIE   I
     BX      LR
 
-.thumb_func
+   .type OS_CPU_SR_Restore, %function
+   .thumb_func
 OS_CPU_SR_Restore:
     CPSID   I                                   @ Cortex-M7 errata notice. See Note #2
     MSR     BASEPRI, R0
@@ -222,7 +230,8 @@ OS_CPU_SR_Restore:
 @              i) Enable interrupts (tasks will run with interrupts enabled).
 @********************************************************************************************************
 
-.thumb_func
+   .type OSStartHighRdy, %function
+   .thumb_func
 OSStartHighRdy:
     CPSID   I                                                   @ Prevent interruption during context switch
     MOVW    R0, #:lower16:NVIC_SYSPRI14                         @ Set the PendSV exception priority
@@ -288,7 +297,9 @@ OSStartHighRdy:
 @              be handled when there are no more interrupts active and interrupts are enabled.
 @********************************************************************************************************
 
-.thumb_func
+   .type OSCtxSw, %function
+   .type OSIntCtxSw, %function
+   .thumb_func
 OSCtxSw:
 OSIntCtxSw:
     LDR     R0, =NVIC_INT_CTRL                                  @ Trigger the PendSV exception (causes context switch)
@@ -344,7 +355,8 @@ OSIntCtxSw:
 @                  CPSIE i
 @********************************************************************************************************
 
-.thumb_func
+   .type PendSV_Handler, %function
+   .thumb_func
 PendSV_Handler:  @ QL was: OS_CPU_PendSVHandler
     CPSID   I                                                   @ Cortex-M7 errata notice. See Note #5
     MOVW    R2, #:lower16:OS_KA_BASEPRI_Boundary                @ Set BASEPRI priority level required for exception preemption
@@ -385,7 +397,11 @@ PendSV_Handler:  @ QL was: OS_CPU_PendSVHandler
     MSR     PSP, R0                                             @ Load PSP with new process SP
 
     MOV     R2, #0                                              @ Restore BASEPRI priority level to 0
+    CPSID   I
     MSR     BASEPRI, R2
+    DSB
+    ISB
+    CPSIE   I
     BX      LR                                                  @ Exception return will restore remaining context
 
 .end

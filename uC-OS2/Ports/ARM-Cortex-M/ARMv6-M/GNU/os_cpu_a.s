@@ -2,7 +2,7 @@
 @                                              uC/OS-II
 @                                        The Real-Time Kernel
 @
-@                    Copyright 1992-2020 Silicon Laboratories Inc. www.silabs.com
+@                    Copyright 1992-2021 Silicon Laboratories Inc. www.silabs.com
 @
 @                                 SPDX-License-Identifier: APACHE-2.0
 @
@@ -12,10 +12,14 @@
 @
 @********************************************************************************************************
 @ Modified from the original to interoperate with CMIS as follows:
-@ - renamed OS_CPU_PendSVHandler to CMSIS-compatible name PendSV_Handler
+@ - renamed OS_CPU_PendSVHandler to CMSIS-compatible name PendSV_Handler (2020-06-01)
+@
+@ - added '.type <nam>, %function' to all functions, as required since binutils version 2.44 (2025-09-27)
+@   (fixes the GNU linker error: "dangerous relocation: unsupported relocation")
+@
+@ GitHub repo: https://github.com/QuantumLeaps/uC-OS2
 @
 @ Quantum Leaps, LLC. www.state-machine.com
-@ 2020-06-01
 @********************************************************************************************************
 
 @********************************************************************************************************
@@ -105,13 +109,15 @@
 @                 }
 @********************************************************************************************************
 
-.thumb_func
+   .type OS_CPU_SR_Save, %function
+   .thumb_func
 OS_CPU_SR_Save:
     MRS     R0, PRIMASK                                         @ Set prio int mask to mask all (except faults)
     CPSID   I
     BX      LR
 
-.thumb_func
+   .type OS_CPU_SR_Restore, %function
+   .thumb_func
 OS_CPU_SR_Restore:
     MSR     PRIMASK, R0
     BX      LR
@@ -133,7 +139,8 @@ OS_CPU_SR_Restore:
 @              f) Enable interrupts (tasks will run with interrupts enabled).
 @********************************************************************************************************
 
-.thumb_func
+   .type OSStartHighRdy, %function
+   .thumb_func
 OSStartHighRdy:
     LDR     R0, =NVIC_SYSPRI14                                  @ Set the PendSV exception priority
     LDR     R1, =NVIC_PENDSV_PRI
@@ -184,7 +191,8 @@ OSCtxSw:
 @              be handled when there are no more interrupts active and interrupts are enabled.
 @********************************************************************************************************
 
-.thumb_func
+   .type OSIntCtxSw, %function
+   .thumb_func
 OSIntCtxSw:
     LDR     R0, =NVIC_INT_CTRL                                  @ Trigger the PendSV exception (causes context switch)
     LDR     R1, =NVIC_PENDSVSET
@@ -231,7 +239,8 @@ OSIntCtxSw:
 @              therefore safe to assume that context being switched out was using the process stack (PSP).
 @********************************************************************************************************
 
-.thumb_func
+   .type PendSV_Handler, %function
+   .thumb_func
 PendSV_Handler:  @ QL was: OS_CPU_PendSVHandler
     CPSID   I                                                   @ Prevent interruption during context switch
     MRS     R0, PSP                                             @ PSP is process stack pointer

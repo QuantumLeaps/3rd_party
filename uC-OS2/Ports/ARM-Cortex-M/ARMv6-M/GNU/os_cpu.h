@@ -3,7 +3,7 @@
 *                                              uC/OS-II
 *                                        The Real-Time Kernel
 *
-*                    Copyright 1992-2020 Silicon Laboratories Inc. www.silabs.com
+*                    Copyright 1992-2021 Silicon Laboratories Inc. www.silabs.com
 *
 *                                 SPDX-License-Identifier: APACHE-2.0
 *
@@ -14,11 +14,12 @@
 *********************************************************************************************************
 *
 * Modified from the original to interoperate with CMIS as follows:
-* - renamed OS_CPU_PendSVHandler to CMSIS-compatible name PendSV_Handler
-* - renamed OS_CPU_SysTickHandler to CMSIS-compatible name SysTick_Handler
+* - renamed OS_CPU_PendSVHandler to CMSIS-compatible name PendSV_Handler (2020-06-01)
+* - renamed OS_CPU_SysTickHandler to CMSIS-compatible name SysTick_Handler (2020-06-01)
+*
+* GitHub repo: https://github.com/QuantumLeaps/uC-OS2
 *
 * Quantum Leaps, LLC. www.state-machine.com
-* 2020-06-01
 */
 
 /*
@@ -27,7 +28,7 @@
 *                                             ARMv6-M Port
 *
 * Filename  : os_cpu.h
-* Version   : V2.93.00
+* Version   : V2.93.01
 *********************************************************************************************************
 * For       : ARMv6-M Cortex-M0 or Cortex-M0+
 * Mode      : Thumb2
