@@ -49,8 +49,8 @@ typedef u32_t               mem_ptr_t;
 #endif
 
 #if defined(__arm__) && defined(__ARMCC_VERSION)
-    /* Setup PACKing macros for KEIL/RVMDK Tools */
-    #define PACK_STRUCT_BEGIN __packed
+    /* Setup PACKing macros for KEIL Compiler 6 Tools */
+    #define PACK_STRUCT_BEGIN _Pragma("pack()")
     #define PACK_STRUCT_STRUCT
     #define PACK_STRUCT_END
     #define PACK_STRUCT_FIELD(x) x
