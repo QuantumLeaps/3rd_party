@@ -182,7 +182,7 @@ struct netif *eth_driver_init(QActive *active,
 {
     struct ip_addr ipaddr;
     struct ip_addr netmask;
-    struct ip_addr gw;
+    struct ip_addr gwaddr;
 
     lwip_init();                                /* nitialize the lwIP stack */
 
@@ -232,11 +232,11 @@ struct netif *eth_driver_init(QActive *active,
      /* either DHCP or AUTOIP are configured, start with zero IP addresses: */
     IP4_ADDR(&ipaddr,  0, 0, 0, 0);
     IP4_ADDR(&netmask, 0, 0, 0, 0);
-    IP4_ADDR(&gw,      0, 0, 0, 0);
+    IP4_ADDR(&gwaddr,  0, 0, 0, 0);
 #endif
           /* add and configure the Ethernet interface with default settings */
     netif_add(&l_netif,
-              &ipaddr, &netmask, &gw,            /* configured IP addresses */
+              &ipaddr, &netmask, &gwaddr,        /* configured IP addresses */
               active,                /* use this active object as the state */
               &ethernetif_init,        /* Ethernet interface initialization */
               &ip_input);                   /* standard IP input processing */
