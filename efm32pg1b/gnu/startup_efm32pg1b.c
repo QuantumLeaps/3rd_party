@@ -89,22 +89,22 @@ void FPUEH_IRQHandler      (void) __attribute__ ((weak, alias("Default_Handler")
 __attribute__ ((section(".isr_vector")))
 int const g_pfnVectors[] = {
     /* Initial Vector Table before relocation */
-    (int)&__stack_end__,          /* Top of Stack                    */
-    (int)&Reset_Handler,          /* Reset Handler                   */
-    (int)&NMI_Handler,            /* NMI Handler                     */
-    (int)&HardFault_Handler,      /* Hard Fault Handler              */
-    (int)&MemManage_Handler,      /* The MPU fault handler           */
-    (int)&BusFault_Handler,       /* The bus fault handler           */
-    (int)&UsageFault_Handler,     /* The usage fault handler         */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&SVC_Handler,            /* SVCall handler                  */
-    (int)&DebugMon_Handler,       /* Debug monitor handler           */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&PendSV_Handler,         /* The PendSV handler              */
-    (int)&SysTick_Handler,        /* The SysTick handler             */
+    (int)&__stack_end__,                // Top of Stack
+    (int)&Reset_Handler,                // Reset Handler
+    (int)&NMI_Handler,                  // NMI Handler
+    (int)&HardFault_Handler,            // Hard Fault Handler
+    (int)&MemManage_Handler,            // Memory Manage (MPU) Handler
+    (int)&BusFault_Handler,             // Bus Fault Handler
+    (int)&UsageFault_Handler,           // Usage Fault Handler
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&SVC_Handler,                  // SVCall handler
+    (int)&DebugMon_Handler,             // Debug monitor handler
+    (int)&Default_Handler,              // Reserved
+    (int)&PendSV_Handler,               // The PendSV handler
+    (int)&SysTick_Handler,              // The SysTick handler
     /* pad the initial VT to the total size of 256B */
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -113,22 +113,22 @@ int const g_pfnVectors[] = {
     /* Relocated Vector Table beyond the 256B region around address 0.
     * That region is used for NULL-pointer protection by the MPU.
     */
-    (int)&__stack_end__,          /* Top of Stack                    */
-    (int)&Reset_Handler,          /* Reset Handler                   */
-    (int)&NMI_Handler,            /* NMI Handler                     */
-    (int)&HardFault_Handler,      /* Hard Fault Handler              */
-    (int)&MemManage_Handler,      /* The MPU fault handler           */
-    (int)&BusFault_Handler,       /* The bus fault handler           */
-    (int)&UsageFault_Handler,     /* The usage fault handler         */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&SVC_Handler,            /* SVCall handler                  */
-    (int)&DebugMon_Handler,       /* Debug monitor handler           */
-    (int)&Default_Handler,        /* Reserved                        */
-    (int)&PendSV_Handler,         /* The PendSV handler              */
-    (int)&SysTick_Handler,        /* The SysTick handler             */
+    (int)&__stack_end__,                // Top of Stack
+    (int)&Reset_Handler,                // Reset Handler
+    (int)&NMI_Handler,                  // NMI Handler
+    (int)&HardFault_Handler,            // Hard Fault Handler
+    (int)&MemManage_Handler,            // Memory Manage (MPU) Handler
+    (int)&BusFault_Handler,             // Bus Fault Handler
+    (int)&UsageFault_Handler,           // Usage Fault Handler
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&SVC_Handler,                  // SVCall handler
+    (int)&DebugMon_Handler,             // Debug monitor handler
+    (int)&Default_Handler,              // Reserved
+    (int)&PendSV_Handler,               // The PendSV handler
+    (int)&SysTick_Handler,              // The SysTick handler
 
     /*IRQ handlers... */
     (int)&EMU_IRQHandler,         /*  0 - EMU                        */

@@ -32,7 +32,7 @@
 ;
         DATA
 __vector_table
-        DCD     sfe(CSTACK)
+        DCD     sfe(CSTACK)                 ; Top of Stack
         DCD     Reset_Handler               ; Reset Handler
         DCD     NMI_Handler                 ; NMI Handler
         DCD     HardFault_Handler           ; Hard Fault Handler

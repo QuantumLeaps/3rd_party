@@ -96,22 +96,22 @@ void Reserved31_IRQHandler (void) __attribute__ ((weak, alias("Default_Handler")
 /*..........................................................................*/
 __attribute__ ((section(".isr_vector")))
 int const g_pfnVectors[] = {
-    (int)&__stack_end__,          /* Top of Stack                   */
-    (int)&Reset_Handler,          /* Reset Handler                  */
-    (int)&NMI_Handler,            /* NMI Handler                    */
-    (int)&HardFault_Handler,      /* Hard Fault Handler             */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&SVC_Handler,            /* SVCall handler                 */
-    (int)&DebugMon_Handler,       /* Debug monitor handler          */
-    (int)&Default_Handler,        /* Reserved                       */
-    (int)&PendSV_Handler,         /* The PendSV handler             */
-    (int)&SysTick_Handler,        /* The SysTick handler            */
+    (int)&__stack_end__,                // Top of Stack
+    (int)&Reset_Handler,                // Reset Handler
+    (int)&NMI_Handler,                  // NMI Handler
+    (int)&HardFault_Handler,            // Hard Fault Handler
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&Default_Handler,              // Reserved
+    (int)&SVC_Handler,                  // SVCall handler
+    (int)&DebugMon_Handler,             // Debug monitor handler
+    (int)&Default_Handler,              // Reserved
+    (int)&PendSV_Handler,               // The PendSV handler
+    (int)&SysTick_Handler,              // The SysTick handler
 
     /*IRQ handlers... */
     (int)&WWDG_IRQHandler,        /* [ 0] Window Watchdog           */
