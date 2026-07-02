@@ -1,7 +1,7 @@
 ;*****************************************************************************
-; @file     startup_stm32u545retxq.s for ARM-KEIL ARM assembler
-; @brief    CMSIS Cortex-M33 Core Device Startup File for stm32u545retx6
-; @date     23 Jun 2024
+; @file     startup_stm32h533retx.s for ARM-KEIL ARM assembler
+; @brief    CMSIS Cortex-M33 Core Device Startup File for tm32h533ret
+; @date     23 Jun 2026
 ;
 ; Modified by Quantum Leaps:
 ; - Modified all exception handlers to branch to assert_failed()
@@ -70,7 +70,7 @@ __Vectors
 
         ; IRQ handlers...
         DCD     WWDG_IRQHandler             ; [  0]
-        DCD     PVD_PVM_IRQHandler          ; [  1]
+        DCD     PVD_AVD_IRQHandler          ; [  1]
         DCD     RTC_IRQHandler              ; [  2]
         DCD     RTC_S_IRQHandler            ; [  3]
         DCD     TAMP_IRQHandler             ; [  4]
@@ -96,16 +96,16 @@ __Vectors
         DCD     EXTI13_IRQHandler           ; [ 24]
         DCD     EXTI14_IRQHandler           ; [ 25]
         DCD     EXTI15_IRQHandler           ; [ 26]
-        DCD     IWDG_IRQHandler             ; [ 27]
-        DCD     SAES_IRQHandler             ; [ 28]
-        DCD     GPDMA1_Channel0_IRQHandler  ; [ 29]
-        DCD     GPDMA1_Channel1_IRQHandler  ; [ 30]
-        DCD     GPDMA1_Channel2_IRQHandler  ; [ 31]
-        DCD     GPDMA1_Channel3_IRQHandler  ; [ 32]
-        DCD     GPDMA1_Channel4_IRQHandler  ; [ 33]
-        DCD     GPDMA1_Channel5_IRQHandler  ; [ 34]
-        DCD     GPDMA1_Channel6_IRQHandler  ; [ 35]
-        DCD     GPDMA1_Channel7_IRQHandler  ; [ 36]
+        DCD     GPDMA1_Channel0_IRQHandler  ; [ 27]
+        DCD     GPDMA1_Channel1_IRQHandler  ; [ 28]
+        DCD     GPDMA1_Channel2_IRQHandler  ; [ 29]
+        DCD     GPDMA1_Channel3_IRQHandler  ; [ 30]
+        DCD     GPDMA1_Channel4_IRQHandler  ; [ 31]
+        DCD     GPDMA1_Channel5_IRQHandler  ; [ 32]
+        DCD     GPDMA1_Channel6_IRQHandler  ; [ 33]
+        DCD     GPDMA1_Channel7_IRQHandler  ; [ 34]
+        DCD     IWDG_IRQHandler             ; [ 35]
+        DCD     SAES_IRQHandler             ; [ 36]
         DCD     ADC1_IRQHandler             ; [ 37]
         DCD     DAC1_IRQHandler             ; [ 38]
         DCD     FDCAN1_IT0_IRQHandler       ; [ 39]
@@ -120,81 +120,88 @@ __Vectors
         DCD     TIM5_IRQHandler             ; [ 48]
         DCD     TIM6_IRQHandler             ; [ 49]
         DCD     TIM7_IRQHandler             ; [ 50]
-        DCD     TIM8_BRK_IRQHandler         ; [ 51]
-        DCD     TIM8_UP_IRQHandler          ; [ 52]
-        DCD     TIM8_TRG_COM_IRQHandler     ; [ 53]
-        DCD     TIM8_CC_IRQHandler          ; [ 54]
-        DCD     I2C1_EV_IRQHandler          ; [ 55]
-        DCD     I2C1_ER_IRQHandler          ; [ 56]
-        DCD     I2C2_EV_IRQHandler          ; [ 57]
-        DCD     I2C2_ER_IRQHandler          ; [ 58]
-        DCD     SPI1_IRQHandler             ; [ 59]
-        DCD     SPI2_IRQHandler             ; [ 60]
-        DCD     USART1_IRQHandler           ; [ 61]
-        DCD     Reserved62_Handler          ; [ 62]
-        DCD     USART3_IRQHandler           ; [ 63]
-        DCD     UART4_IRQHandler            ; [ 64]
-        DCD     UART5_IRQHandler            ; [ 65]
-        DCD     LPUART1_IRQHandler          ; [ 66]
-        DCD     LPTIM1_IRQHandler           ; [ 67]
-        DCD     LPTIM2_IRQHandler           ; [ 68]
-        DCD     TIM15_IRQHandler            ; [ 69]
-        DCD     TIM16_IRQHandler            ; [ 70]
-        DCD     TIM17_IRQHandler            ; [ 71]
-        DCD     COMP_IRQHandler             ; [ 72]
-        DCD     USB_IRQHandler              ; [ 73]
-        DCD     CRS_IRQHandler              ; [ 74]
-        DCD     Reserved75_Handler          ; [ 75]
-        DCD     OCTOSPI1_IRQHandler         ; [ 76]
-        DCD     PWR_S3WU_IRQHandler         ; [ 77]
-        DCD     SDMMC1_IRQHandler           ; [ 78]
-        DCD     Reserved79_Handler          ; [ 79]
-        DCD     GPDMA1_Channel8_IRQHandler  ; [ 80]
-        DCD     GPDMA1_Channel9_IRQHandler  ; [ 81]
-        DCD     GPDMA1_Channel10_IRQHandler ; [ 82]
-        DCD     GPDMA1_Channel11_IRQHandler ; [ 83]
-        DCD     GPDMA1_Channel12_IRQHandler ; [ 84]
-        DCD     GPDMA1_Channel13_IRQHandler ; [ 85]
-        DCD     GPDMA1_Channel14_IRQHandler ; [ 86]
-        DCD     GPDMA1_Channel15_IRQHandler ; [ 87]
-        DCD     I2C3_EV_IRQHandler          ; [ 88]
-        DCD     I2C3_ER_IRQHandler          ; [ 89]
-        DCD     SAI1_IRQHandler             ; [ 90]
-        DCD     Reserved91_Handler          ; [ 91]
-        DCD     TSC_IRQHandler              ; [ 92]
-        DCD     AES_IRQHandler              ; [ 93]
-        DCD     RNG_IRQHandler              ; [ 94]
-        DCD     FPU_IRQHandler              ; [ 95]
-        DCD     HASH_IRQHandler             ; [ 96]
-        DCD     PKA_IRQHandler              ; [ 97]
-        DCD     LPTIM3_IRQHandler           ; [ 98]
-        DCD     SPI3_IRQHandler             ; [ 99]
-        DCD     I2C4_ER_IRQHandler          ; [100]
-        DCD     I2C4_EV_IRQHandler          ; [101]
-        DCD     MDF1_FLT0_IRQHandler        ; [102]
-        DCD     MDF1_FLT1_IRQHandler        ; [103]
-        DCD     Reserved104_Handler         ; [104]
-        DCD     Reserved105_Handler         ; [105]
+        DCD     I2C1_EV_IRQHandler          ; [ 51]
+        DCD     I2C1_ER_IRQHandler          ; [ 52]
+        DCD     I2C2_EV_IRQHandler          ; [ 53]
+        DCD     I2C2_ER_IRQHandler          ; [ 54]
+        DCD     SPI1_IRQHandler             ; [ 55]
+        DCD     SPI2_IRQHandler             ; [ 56]
+        DCD     SPI3_IRQHandler             ; [ 57]
+        DCD     USART1_IRQHandler           ; [ 58]
+        DCD     USART2_IRQHandler           ; [ 59]
+        DCD     USART3_IRQHandler           ; [ 60]
+        DCD     UART4_IRQHandler            ; [ 61]
+        DCD     UART5_IRQHandler            ; [ 62]
+        DCD     LPUART1_IRQHandler          ; [ 63]
+        DCD     LPTIM1_IRQHandler           ; [ 64]
+        DCD     TIM8_BRK_IRQHandler         ; [ 65]
+        DCD     TIM8_UP_IRQHandler          ; [ 66]
+        DCD     TIM8_TRG_COM_IRQHandler     ; [ 67]
+        DCD     TIM8_CC_IRQHandler          ; [ 68]
+        DCD     ADC2_IRQHandler             ; [ 69]
+        DCD     LPTIM2_IRQHandler           ; [ 70]
+        DCD     TIM15_IRQHandler            ; [ 71]
+        DCD     Reserved72_Handler          ; [ 72]
+        DCD     Reserved73_Handler          ; [ 73]
+        DCD     USB_DRD_FS_IRQHandler       ; [ 74]
+        DCD     CRS_IRQHandler              ; [ 75]
+        DCD     UCPD1_IRQHandler            ; [ 76]
+        DCD     FMC_IRQHandler              ; [ 77]
+        DCD     OCTOSPI1_IRQHandler         ; [ 78]
+        DCD     SDMMC1_IRQHandler           ; [ 79]
+        DCD     I2C3_EV_IRQHandler          ; [ 80]
+        DCD     I2C3_ER_IRQHandler          ; [ 81]
+        DCD     SPI4_IRQHandler             ; [ 82]
+        DCD     Reserved83_Handler          ; [ 83]
+        DCD     Reserved84_Handler          ; [ 84]
+        DCD     USART6_IRQHandler           ; [ 85]
+        DCD     Reserved86_Handler          ; [ 86]
+        DCD     Reserved87_Handler          ; [ 87]
+        DCD     Reserved88_Handler          ; [ 88]
+        DCD     Reserved89_Handler          ; [ 89]
+        DCD     GPDMA2_Channel0_IRQHandler  ; [ 90]
+        DCD     GPDMA2_Channel1_IRQHandler  ; [ 91]
+        DCD     GPDMA2_Channel2_IRQHandler  ; [ 92]
+        DCD     GPDMA2_Channel3_IRQHandler  ; [ 93]
+        DCD     GPDMA2_Channel4_IRQHandler  ; [ 94]
+        DCD     GPDMA2_Channel5_IRQHandler  ; [ 95]
+        DCD     GPDMA2_Channel6_IRQHandler  ; [ 96]
+        DCD     GPDMA2_Channel7_IRQHandler  ; [ 97]
+        DCD     Reserved98_Handler          ; [ 98]
+        DCD     Reserved99_Handler          ; [ 99]
+        DCD     Reserved100_Handler         ; [100]
+        DCD     Reserved101_Handler         ; [101]
+        DCD     Reserved102_Handler         ; [102]
+        DCD     FPU_IRQHandler              ; [103]
+        DCD     ICACHE_IRQHandler           ; [104]
+        DCD     DCACHE1_IRQHandler          ; [105]
         DCD     Reserved106_Handler         ; [106]
-        DCD     ICACHE_IRQHandler           ; [107]
-        DCD     OTFDEC1_IRQHandler          ; [108]
-        DCD     Reserved109_Handler         ; [109]
-        DCD     LPTIM4_IRQHandler           ; [110]
-        DCD     DCACHE1_IRQHandler          ; [111]
-        DCD     ADF1_IRQHandler             ; [112]
-        DCD     ADC4_IRQHandler             ; [113]
-        DCD     LPDMA1_Channel0_IRQHandler  ; [114]
-        DCD     LPDMA1_Channel1_IRQHandler  ; [115]
-        DCD     LPDMA1_Channel2_IRQHandler  ; [116]
-        DCD     LPDMA1_Channel3_IRQHandler  ; [117]
-        DCD     Reserved118_Handler         ; [118]
-        DCD     DCMI_PSSI_IRQHandler        ; [119]
-        DCD     Reserved120_Handler         ; [120]
+        DCD     Reserved107_Handler         ; [107]
+        DCD     DCMI_PSSI_IRQHandler        ; [108]
+        DCD     FDCAN2_IT0_IRQHandler       ; [109]
+        DCD     FDCAN2_IT1_IRQHandler       ; [110]
+        DCD     Reserved111_Handler         ; [111]
+        DCD     Reserved112_Handler         ; [112]
+        DCD     DTS_IRQHandler              ; [113]
+        DCD     RNG_IRQHandler              ; [114]
+        DCD     OTFDEC1_IRQHandler          ; [115]
+        DCD     AES_IRQHandler              ; [116]
+        DCD     HASH_IRQHandler             ; [117]
+        DCD     PKA_IRQHandler              ; [118]
+        DCD     CEC_IRQHandler              ; [119]
+        DCD     TIM12_IRQHandler            ; [120]
         DCD     Reserved121_Handler         ; [121]
         DCD     Reserved122_Handler         ; [122]
-        DCD     CORDIC_IRQHandler           ; [113]
-        DCD     FMAC_IRQHandler             ; [114]
-        DCD     LSECSSD_IRQHandler          ; [115]
+        DCD     I3C1_EV_IRQHandler          ; [123]
+        DCD     I3C1_ER_IRQHandler          ; [124]
+        DCD     Reserved125_Handler         ; [125]
+        DCD     Reserved126_Handler         ; [126]
+        DCD     Reserved127_Handler         ; [127]
+        DCD     Reserved128_Handler         ; [128]
+        DCD     Reserved129_Handler         ; [129]
+        DCD     Reserved130_Handler         ; [130]
+        DCD     I3C2_EV_IRQHandler          ; [131]
+        DCD     I3C2_ER_IRQHandler          ; [132]
 
 __Vectors_End
 
@@ -399,7 +406,7 @@ str_SysTick
 ;******************************************************************************
 Default_Handler PROC
         EXPORT  WWDG_IRQHandler             [WEAK]
-        EXPORT  PVD_PVM_IRQHandler          [WEAK]
+        EXPORT  PVD_AVD_IRQHandler          [WEAK]
         EXPORT  RTC_IRQHandler              [WEAK]
         EXPORT  RTC_S_IRQHandler            [WEAK]
         EXPORT  TAMP_IRQHandler             [WEAK]
@@ -425,8 +432,6 @@ Default_Handler PROC
         EXPORT  EXTI13_IRQHandler           [WEAK]
         EXPORT  EXTI14_IRQHandler           [WEAK]
         EXPORT  EXTI15_IRQHandler           [WEAK]
-        EXPORT  IWDG_IRQHandler             [WEAK]
-        EXPORT  SAES_IRQHandler             [WEAK]
         EXPORT  GPDMA1_Channel0_IRQHandler  [WEAK]
         EXPORT  GPDMA1_Channel1_IRQHandler  [WEAK]
         EXPORT  GPDMA1_Channel2_IRQHandler  [WEAK]
@@ -435,6 +440,8 @@ Default_Handler PROC
         EXPORT  GPDMA1_Channel5_IRQHandler  [WEAK]
         EXPORT  GPDMA1_Channel6_IRQHandler  [WEAK]
         EXPORT  GPDMA1_Channel7_IRQHandler  [WEAK]
+        EXPORT  IWDG_IRQHandler             [WEAK]
+        EXPORT  SAES_IRQHandler             [WEAK]
         EXPORT  ADC1_IRQHandler             [WEAK]
         EXPORT  DAC1_IRQHandler             [WEAK]
         EXPORT  FDCAN1_IT0_IRQHandler       [WEAK]
@@ -449,85 +456,92 @@ Default_Handler PROC
         EXPORT  TIM5_IRQHandler             [WEAK]
         EXPORT  TIM6_IRQHandler             [WEAK]
         EXPORT  TIM7_IRQHandler             [WEAK]
-        EXPORT  TIM8_BRK_IRQHandler         [WEAK]
-        EXPORT  TIM8_UP_IRQHandler          [WEAK]
-        EXPORT  TIM8_TRG_COM_IRQHandler     [WEAK]
-        EXPORT  TIM8_CC_IRQHandler          [WEAK]
         EXPORT  I2C1_EV_IRQHandler          [WEAK]
         EXPORT  I2C1_ER_IRQHandler          [WEAK]
         EXPORT  I2C2_EV_IRQHandler          [WEAK]
         EXPORT  I2C2_ER_IRQHandler          [WEAK]
         EXPORT  SPI1_IRQHandler             [WEAK]
         EXPORT  SPI2_IRQHandler             [WEAK]
+        EXPORT  SPI3_IRQHandler             [WEAK]
         EXPORT  USART1_IRQHandler           [WEAK]
+        EXPORT  USART2_IRQHandler           [WEAK]
         EXPORT  USART3_IRQHandler           [WEAK]
         EXPORT  UART4_IRQHandler            [WEAK]
         EXPORT  UART5_IRQHandler            [WEAK]
         EXPORT  LPUART1_IRQHandler          [WEAK]
         EXPORT  LPTIM1_IRQHandler           [WEAK]
+        EXPORT  TIM8_BRK_IRQHandler         [WEAK]
+        EXPORT  TIM8_UP_IRQHandler          [WEAK]
+        EXPORT  TIM8_TRG_COM_IRQHandler     [WEAK]
+        EXPORT  TIM8_CC_IRQHandler          [WEAK]
+        EXPORT  ADC2_IRQHandler             [WEAK]
         EXPORT  LPTIM2_IRQHandler           [WEAK]
         EXPORT  TIM15_IRQHandler            [WEAK]
-        EXPORT  TIM16_IRQHandler            [WEAK]
-        EXPORT  TIM17_IRQHandler            [WEAK]
-        EXPORT  COMP_IRQHandler             [WEAK]
-        EXPORT  USB_IRQHandler              [WEAK]
+        EXPORT  USB_DRD_FS_IRQHandler       [WEAK]
         EXPORT  CRS_IRQHandler              [WEAK]
+        EXPORT  UCPD1_IRQHandler            [WEAK]
+        EXPORT  FMC_IRQHandler              [WEAK]
         EXPORT  OCTOSPI1_IRQHandler         [WEAK]
-        EXPORT  PWR_S3WU_IRQHandler         [WEAK]
         EXPORT  SDMMC1_IRQHandler           [WEAK]
-        EXPORT  GPDMA1_Channel8_IRQHandler  [WEAK]
-        EXPORT  GPDMA1_Channel9_IRQHandler  [WEAK]
-        EXPORT  GPDMA1_Channel10_IRQHandler [WEAK]
-        EXPORT  GPDMA1_Channel11_IRQHandler [WEAK]
-        EXPORT  GPDMA1_Channel12_IRQHandler [WEAK]
-        EXPORT  GPDMA1_Channel13_IRQHandler [WEAK]
-        EXPORT  GPDMA1_Channel14_IRQHandler [WEAK]
-        EXPORT  GPDMA1_Channel15_IRQHandler [WEAK]
         EXPORT  I2C3_EV_IRQHandler          [WEAK]
         EXPORT  I2C3_ER_IRQHandler          [WEAK]
-        EXPORT  SAI1_IRQHandler             [WEAK]
-        EXPORT  TSC_IRQHandler              [WEAK]
-        EXPORT  AES_IRQHandler              [WEAK]
-        EXPORT  RNG_IRQHandler              [WEAK]
+        EXPORT  SPI4_IRQHandler             [WEAK]
+        EXPORT  USART6_IRQHandler           [WEAK]
+        EXPORT  GPDMA2_Channel0_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel1_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel2_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel3_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel4_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel5_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel6_IRQHandler  [WEAK]
+        EXPORT  GPDMA2_Channel7_IRQHandler  [WEAK]
         EXPORT  FPU_IRQHandler              [WEAK]
+        EXPORT  ICACHE_IRQHandler           [WEAK]
+        EXPORT  DCACHE1_IRQHandler          [WEAK]
+        EXPORT  DCMI_PSSI_IRQHandler        [WEAK]
+        EXPORT  FDCAN2_IT0_IRQHandler       [WEAK]
+        EXPORT  FDCAN2_IT1_IRQHandler       [WEAK]
+        EXPORT  DTS_IRQHandler              [WEAK]
+        EXPORT  RNG_IRQHandler              [WEAK]
+        EXPORT  OTFDEC1_IRQHandler          [WEAK]
+        EXPORT  AES_IRQHandler              [WEAK]
         EXPORT  HASH_IRQHandler             [WEAK]
         EXPORT  PKA_IRQHandler              [WEAK]
-        EXPORT  LPTIM3_IRQHandler           [WEAK]
-        EXPORT  SPI3_IRQHandler             [WEAK]
-        EXPORT  I2C4_ER_IRQHandler          [WEAK]
-        EXPORT  I2C4_EV_IRQHandler          [WEAK]
-        EXPORT  MDF1_FLT0_IRQHandler        [WEAK]
-        EXPORT  MDF1_FLT1_IRQHandler        [WEAK]
-        EXPORT  ICACHE_IRQHandler           [WEAK]
-        EXPORT  OTFDEC1_IRQHandler          [WEAK]
-        EXPORT  LPTIM4_IRQHandler           [WEAK]
-        EXPORT  DCACHE1_IRQHandler          [WEAK]
-        EXPORT  ADF1_IRQHandler             [WEAK]
-        EXPORT  ADC4_IRQHandler             [WEAK]
-        EXPORT  LPDMA1_Channel0_IRQHandler  [WEAK]
-        EXPORT  LPDMA1_Channel1_IRQHandler  [WEAK]
-        EXPORT  LPDMA1_Channel2_IRQHandler  [WEAK]
-        EXPORT  LPDMA1_Channel3_IRQHandler  [WEAK]
-        EXPORT  DCMI_PSSI_IRQHandler        [WEAK]
-        EXPORT  CORDIC_IRQHandler           [WEAK]
-        EXPORT  FMAC_IRQHandler             [WEAK]
-        EXPORT  LSECSSD_IRQHandler          [WEAK]
-        EXPORT  Reserved62_Handler          [WEAK]
-        EXPORT  Reserved75_Handler          [WEAK]
-        EXPORT  Reserved79_Handler          [WEAK]
-        EXPORT  Reserved91_Handler          [WEAK]
-        EXPORT  Reserved104_Handler         [WEAK]
-        EXPORT  Reserved105_Handler         [WEAK]
+        EXPORT  CEC_IRQHandler              [WEAK]
+        EXPORT  TIM12_IRQHandler            [WEAK]
+        EXPORT  I3C1_EV_IRQHandler          [WEAK]
+        EXPORT  I3C1_ER_IRQHandler          [WEAK]
+        EXPORT  I3C2_EV_IRQHandler          [WEAK]
+        EXPORT  I3C2_ER_IRQHandler          [WEAK]
+        EXPORT  Reserved72_Handler          [WEAK]
+        EXPORT  Reserved73_Handler          [WEAK]
+        EXPORT  Reserved83_Handler          [WEAK]
+        EXPORT  Reserved84_Handler          [WEAK]
+        EXPORT  Reserved86_Handler          [WEAK]
+        EXPORT  Reserved87_Handler          [WEAK]
+        EXPORT  Reserved88_Handler          [WEAK]
+        EXPORT  Reserved89_Handler          [WEAK]
+        EXPORT  Reserved98_Handler          [WEAK]
+        EXPORT  Reserved99_Handler          [WEAK]
+        EXPORT  Reserved100_Handler         [WEAK]
+        EXPORT  Reserved101_Handler         [WEAK]
+        EXPORT  Reserved102_Handler         [WEAK]
         EXPORT  Reserved106_Handler         [WEAK]
-        EXPORT  Reserved109_Handler         [WEAK]
-        EXPORT  Reserved118_Handler         [WEAK]
-        EXPORT  Reserved120_Handler         [WEAK]
+        EXPORT  Reserved107_Handler         [WEAK]
+        EXPORT  Reserved111_Handler         [WEAK]
+        EXPORT  Reserved112_Handler         [WEAK]
         EXPORT  Reserved121_Handler         [WEAK]
         EXPORT  Reserved122_Handler         [WEAK]
+        EXPORT  Reserved125_Handler         [WEAK]
+        EXPORT  Reserved126_Handler         [WEAK]
+        EXPORT  Reserved127_Handler         [WEAK]
+        EXPORT  Reserved128_Handler         [WEAK]
+        EXPORT  Reserved129_Handler         [WEAK]
+        EXPORT  Reserved130_Handler         [WEAK]
 
 
 WWDG_IRQHandler
-PVD_PVM_IRQHandler
+PVD_AVD_IRQHandler
 RTC_IRQHandler
 RTC_S_IRQHandler
 TAMP_IRQHandler
@@ -553,8 +567,6 @@ EXTI12_IRQHandler
 EXTI13_IRQHandler
 EXTI14_IRQHandler
 EXTI15_IRQHandler
-IWDG_IRQHandler
-SAES_IRQHandler
 GPDMA1_Channel0_IRQHandler
 GPDMA1_Channel1_IRQHandler
 GPDMA1_Channel2_IRQHandler
@@ -563,6 +575,8 @@ GPDMA1_Channel4_IRQHandler
 GPDMA1_Channel5_IRQHandler
 GPDMA1_Channel6_IRQHandler
 GPDMA1_Channel7_IRQHandler
+IWDG_IRQHandler
+SAES_IRQHandler
 ADC1_IRQHandler
 DAC1_IRQHandler
 FDCAN1_IT0_IRQHandler
@@ -577,81 +591,88 @@ TIM4_IRQHandler
 TIM5_IRQHandler
 TIM6_IRQHandler
 TIM7_IRQHandler
-TIM8_BRK_IRQHandler
-TIM8_UP_IRQHandler
-TIM8_TRG_COM_IRQHandler
-TIM8_CC_IRQHandler
 I2C1_EV_IRQHandler
 I2C1_ER_IRQHandler
 I2C2_EV_IRQHandler
 I2C2_ER_IRQHandler
 SPI1_IRQHandler
 SPI2_IRQHandler
+SPI3_IRQHandler
 USART1_IRQHandler
+USART2_IRQHandler
 USART3_IRQHandler
 UART4_IRQHandler
 UART5_IRQHandler
 LPUART1_IRQHandler
 LPTIM1_IRQHandler
+TIM8_BRK_IRQHandler
+TIM8_UP_IRQHandler
+TIM8_TRG_COM_IRQHandler
+TIM8_CC_IRQHandler
+ADC2_IRQHandler
 LPTIM2_IRQHandler
 TIM15_IRQHandler
-TIM16_IRQHandler
-TIM17_IRQHandler
-COMP_IRQHandler
-USB_IRQHandler
+USB_DRD_FS_IRQHandler
 CRS_IRQHandler
+UCPD1_IRQHandler
+FMC_IRQHandler
 OCTOSPI1_IRQHandler
-PWR_S3WU_IRQHandler
 SDMMC1_IRQHandler
-GPDMA1_Channel8_IRQHandler
-GPDMA1_Channel9_IRQHandler
-GPDMA1_Channel10_IRQHandler
-GPDMA1_Channel11_IRQHandler
-GPDMA1_Channel12_IRQHandler
-GPDMA1_Channel13_IRQHandler
-GPDMA1_Channel14_IRQHandler
-GPDMA1_Channel15_IRQHandler
 I2C3_EV_IRQHandler
 I2C3_ER_IRQHandler
-SAI1_IRQHandler
-TSC_IRQHandler
-AES_IRQHandler
-RNG_IRQHandler
+SPI4_IRQHandler
+USART6_IRQHandler
+GPDMA2_Channel0_IRQHandler
+GPDMA2_Channel1_IRQHandler
+GPDMA2_Channel2_IRQHandler
+GPDMA2_Channel3_IRQHandler
+GPDMA2_Channel4_IRQHandler
+GPDMA2_Channel5_IRQHandler
+GPDMA2_Channel6_IRQHandler
+GPDMA2_Channel7_IRQHandler
 FPU_IRQHandler
+ICACHE_IRQHandler
+DCACHE1_IRQHandler
+DCMI_PSSI_IRQHandler
+FDCAN2_IT0_IRQHandler
+FDCAN2_IT1_IRQHandler
+DTS_IRQHandler
+RNG_IRQHandler
+OTFDEC1_IRQHandler
+AES_IRQHandler
 HASH_IRQHandler
 PKA_IRQHandler
-LPTIM3_IRQHandler
-SPI3_IRQHandler
-I2C4_ER_IRQHandler
-I2C4_EV_IRQHandler
-MDF1_FLT0_IRQHandler
-MDF1_FLT1_IRQHandler
-ICACHE_IRQHandler
-OTFDEC1_IRQHandler
-LPTIM4_IRQHandler
-DCACHE1_IRQHandler
-ADF1_IRQHandler
-ADC4_IRQHandler
-LPDMA1_Channel0_IRQHandler
-LPDMA1_Channel1_IRQHandler
-LPDMA1_Channel2_IRQHandler
-LPDMA1_Channel3_IRQHandler
-DCMI_PSSI_IRQHandler
-CORDIC_IRQHandler
-FMAC_IRQHandler
-LSECSSD_IRQHandler
-Reserved62_Handler
-Reserved75_Handler
-Reserved79_Handler
-Reserved91_Handler
-Reserved104_Handler
-Reserved105_Handler
+CEC_IRQHandler
+TIM12_IRQHandler
+I3C1_EV_IRQHandler
+I3C1_ER_IRQHandler
+I3C2_EV_IRQHandler
+I3C2_ER_IRQHandler
+Reserved72_Handler
+Reserved73_Handler
+Reserved83_Handler
+Reserved84_Handler
+Reserved86_Handler
+Reserved87_Handler
+Reserved88_Handler
+Reserved89_Handler
+Reserved98_Handler
+Reserved99_Handler
+Reserved100_Handler
+Reserved101_Handler
+Reserved102_Handler
 Reserved106_Handler
-Reserved109_Handler
-Reserved118_Handler
-Reserved120_Handler
+Reserved107_Handler
+Reserved111_Handler
+Reserved112_Handler
 Reserved121_Handler
 Reserved122_Handler
+Reserved125_Handler
+Reserved126_Handler
+Reserved127_Handler
+Reserved128_Handler
+Reserved129_Handler
+Reserved130_Handler
         CPSID   i                 ; disable all interrupts
         LDR     r0,=str_Undefined
         MOVS    r1,#1

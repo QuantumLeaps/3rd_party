@@ -1,5 +1,5 @@
 //============================================================================
-// QUTEST port for NUCLEO-U545RE-Q board
+// QUTEST port for NUCLEO-H533RE board
 //
 // Copyright (C) 2005 Quantum Leaps, LLC. All rights reserved.
 //
@@ -36,12 +36,15 @@
 #include "qs_pkg.h"    // QS package-scope interface
 #include "qsafe.h"     // QP Functional Safety (FuSa) Subsystem
 
-#include "stm32u545xx.h"  // CMSIS-compliant header file for the MCU used
+#include "stm32h533xx.h"  // CMSIS-compliant header file for the MCU used
 // add other drivers if necessary...
 
-//Q_DEFINE_THIS_MODULE("qutest_port")
+//============================================================================
+//Q_DEFINE_THIS_MODULE("qutest_port") // name of this file for assertions
 
-// Local-scope defines -------------------------------------------------------
+// HSI CPU clock (64MHz) divisor (allowed 1U, 2U, 4U, 8U)
+#define HSI_CLK_DIV 4U  // 64MHz/4 == 16MHz
+
 // LED pins available on the board (just one user LED LD2--Green on PA.5)
 #define LD2_PIN  5U
 
@@ -62,16 +65,16 @@
 // ISR for receiving bytes from the QSPY Back-End
 // NOTE: This ISR is "QF-unaware" meaning that it does not interact with
 // the underlying kernel
-void USART1_IRQHandler(void); // prototype
-void USART1_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrupt)
+void USART2_IRQHandler(void); // prototype
+void USART2_IRQHandler(void) { // used in QS-RX (kernel UNAWARE interrupt)
     // while Read Data Register or RX-FIFO Not Empty
-    while ((USART1->ISR & USART_ISR_RXNE_Msk ) != 0U) {
-        uint32_t const b = USART1->RDR;
+    while ((USART2->ISR & USART_ISR_RXNE_Msk ) != 0U) {
+        uint32_t const b = USART2->RDR;
         QS_RX_PUT(b);
     }
 }
-
 //............................................................................
+// assertion failure handler for the startup code and libraries
 void assert_failed(char const * const module, int_t const id); // prototype
 void assert_failed(char const * const module, int_t const id) {
     Q_onError(module, id);
@@ -80,6 +83,53 @@ void assert_failed(char const * const module, int_t const id) {
 //============================================================================
 // QS callbacks...
 
+//..........................................................................
+static void SystemClock_Config(void) {
+#if HSI_CLK_DIV == 1U
+    uint32_t const rcc_cr_hisdiv = 0U;              // div by 1
+    uint32_t const flash_latency = FLASH_ACR_LATENCY_3WS;
+#elif HSI_CLK_DIV == 2U
+    uint32_t const rcc_cr_hisdiv = RCC_CR_HSIDIV_0; // div by 2
+    uint32_t const flash_latency = FLASH_ACR_LATENCY_1WS;
+#elif HSI_CLK_DIV == 4U
+    uint32_t const rcc_cr_hisdiv = RCC_CR_HSIDIV_1; // div by 4
+    uint32_t const flash_latency = FLASH_ACR_LATENCY_0WS;
+#elif HSI_CLK_DIV == 8U
+    uint32_t const rcc_cr_hisdiv = RCC_CR_HSIDIV;   // div by 8
+    uint32_t const flash_latency = FLASH_ACR_LATENCY_0WS;
+#else
+    error Unsupported HSI_CLK_DIV
+#endif
+
+    // Flash latency depends on the clock speed...
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, flash_latency);
+    while (READ_BIT(FLASH->ACR, 0U)) {
+    }
+
+    MODIFY_REG(PWR->VOSCR, PWR_VOSCR_VOS, 0U);
+    while (READ_BIT(PWR->VOSSR, PWR_VOSSR_VOSRDY) != PWR_VOSSR_VOSRDY) {
+    }
+
+    SET_BIT(RCC->CR, RCC_CR_HSION);
+    while (READ_BIT(RCC->CR, RCC_CR_HSIRDY) != RCC_CR_HSIRDY) {
+    }
+
+    MODIFY_REG(RCC->HSICFGR, RCC_HSICFGR_HSITRIM, 64U << RCC_HSICFGR_HSITRIM_Pos);
+    MODIFY_REG(RCC->CR, RCC_CR_HSIDIV, rcc_cr_hisdiv);
+    MODIFY_REG(RCC->CFGR1, RCC_CFGR1_SW, 0x0);
+    while (READ_BIT(RCC->CFGR1, RCC_CFGR1_SWS) != 0U) {
+    }
+
+    MODIFY_REG(RCC->CFGR2, RCC_CFGR2_HPRE, 0U);
+    MODIFY_REG(RCC->CFGR2, RCC_CFGR2_PPRE1, 0U);
+    MODIFY_REG(RCC->CFGR2, RCC_CFGR2_PPRE2, 0U);
+    MODIFY_REG(RCC->CFGR2, RCC_CFGR2_PPRE3, 0U);
+
+    // update SystemCoreClock
+    SystemCoreClockUpdate();
+}
+
+//............................................................................
 static uint16_t const QS_UARTPrescTable[12] = {
     1U, 2U, 4U, 6U, 8U, 10U, 12U, 16U, 32U, 64U, 128U, 256U
 };
@@ -92,15 +142,15 @@ static uint16_t const QS_UARTPrescTable[12] = {
   ((((__PCLK__)/QS_UARTPrescTable[(__CLOCKPRESCALER__)]) \
   + ((__BAUD__)/2U)) / (__BAUD__))
 
-// USART1 pins PA.9 and PA.10
-#define USART1_TX_PIN 9U
-#define USART1_RX_PIN 10U
+// USART2 pins PA.2 and PA.3
+#define USART2_TX_PIN 2U
+#define USART2_RX_PIN 3U
 
 //............................................................................
 uint8_t QS_onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
-    SystemCoreClockUpdate();
+    SystemClock_Config(); // configure the CPU clock
 
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
     QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
@@ -108,10 +158,10 @@ uint8_t QS_onStartup(void const *arg) {
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
     QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
 
-    // enable GPIOA clock port for the LED LD4
-    RCC->AHB2ENR1 |= RCC_AHB2ENR1_GPIOAEN;
+    // enable GPIOA clock port for the LD2 LED
+    SET_BIT(RCC->AHB2ENR, RCC_AHB2ENR_GPIOAEN);
 
-    // set all used GPIOA pins as push-pull output, no pull-up, pull-down
+    // set LD2_PIN as output, no pull-up, pull-down
     MODIFY_REG(GPIOA->OSPEEDR,
                GPIO_OSPEEDR_OSPEED0 << (LD2_PIN * GPIO_OSPEEDR_OSPEED1_Pos),
                1U << (LD2_PIN * GPIO_OSPEEDR_OSPEED1_Pos)); // speed==1
@@ -125,107 +175,129 @@ uint8_t QS_onStartup(void const *arg) {
                GPIO_MODER_MODE0 << (LD2_PIN * GPIO_MODER_MODE1_Pos),
                1U << (LD2_PIN * GPIO_MODER_MODE1_Pos)); // MODE_1
 
-    // enable GPIOC clock port for the Button B1
-    RCC->AHB2ENR1 |=  RCC_AHB2ENR1_GPIOCEN;
+    // enable peripheral clock for USART2 and its pins
+    SET_BIT(RCC->APB1LENR, RCC_APB1LENR_USART2EN); // USART2 clock
+    SET_BIT(RCC->AHB2ENR, RCC_AHB2ENR_GPIOAEN); // GPIOA clock for pins
 
-    // configure Button B1 pin on GPIOC as input, no pull-up, pull-down
-    MODIFY_REG(GPIOC->PUPDR,
-               GPIO_PUPDR_PUPD0 << (B1_PIN * GPIO_PUPDR_PUPD1_Pos),
-               0U << (B1_PIN * GPIO_PUPDR_PUPD1_Pos)); // NO PULL
-    MODIFY_REG(GPIOC->MODER,
-               GPIO_MODER_MODE0 << (B1_PIN * GPIO_MODER_MODE1_Pos),
-               0U << (B1_PIN * GPIO_MODER_MODE1_Pos)); // MODE_0
+    // configure GPIOA to USART2_TX and USART2_RX pins.........................
+    uint32_t tmp;
 
-    // enable peripheral clock for USART1 and its pins
-    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_USART1EN); // UART1 clock
-    SET_BIT(RCC->AHB2ENR1, RCC_AHB2ENR1_GPIOAEN); // GPIOA clock for pins
+    // configure GPIOA to USART2_TX ...........................................
+    // configure alternate function
+    tmp = GPIOA->AFR[USART2_TX_PIN >> 3U];
+    tmp &= ~(0x0FUL << ((USART2_TX_PIN & 0x07U) * GPIO_AFRL_AFSEL1_Pos));
+    tmp |= (7U << ((USART2_TX_PIN & 0x07U) * GPIO_AFRL_AFSEL1_Pos));
+    GPIOA->AFR[USART2_TX_PIN >> 3U] = tmp; // 0x700
 
-    // Configure GPIOA to USART1_RX and USART1_TX pins.........................
-    MODIFY_REG(GPIOA->OSPEEDR,
-        GPIO_OSPEEDR_OSPEED0 << (USART1_TX_PIN * GPIO_OSPEEDR_OSPEED1_Pos),
-        0U << (USART1_TX_PIN * GPIO_OSPEEDR_OSPEED1_Pos)); // speed==0
-    MODIFY_REG(GPIOA->OSPEEDR,
-        GPIO_OSPEEDR_OSPEED0 << (USART1_RX_PIN * GPIO_OSPEEDR_OSPEED1_Pos),
-        0U << (USART1_RX_PIN * GPIO_OSPEEDR_OSPEED1_Pos)); // speed==0
+    // configure IO Direction mode (Input, Output, Alternate or Analog)
+    tmp = GPIOA->MODER;
+    tmp &= ~(GPIO_MODER_MODE0 << (USART2_TX_PIN * GPIO_MODER_MODE1_Pos));
+    tmp |= (2U << (USART2_TX_PIN * GPIO_MODER_MODE1_Pos));
+    GPIOA->MODER = tmp;
 
-    MODIFY_REG(GPIOA->OTYPER,
-        (1U << USART1_TX_PIN) | (1U << USART1_RX_PIN),
-        ((1U << USART1_TX_PIN) | (1U << USART1_RX_PIN) * 0U)); // output
+    // configure the IO Speed
+    tmp = GPIOA->OSPEEDR;
+    tmp &= ~(GPIO_OSPEEDR_OSPEED0 << (USART2_TX_PIN * GPIO_OSPEEDR_OSPEED1_Pos));
+    tmp |= (2U << (USART2_TX_PIN * GPIO_OSPEEDR_OSPEED1_Pos));
+    GPIOA->OSPEEDR = tmp;
 
-    MODIFY_REG(GPIOA->PUPDR,
-        GPIO_PUPDR_PUPD0 << (USART1_TX_PIN * GPIO_PUPDR_PUPD1_Pos),
-        0U << (USART1_TX_PIN * GPIO_PUPDR_PUPD1_Pos)); // PUSHPULL
-    MODIFY_REG(GPIOA->PUPDR,
-        GPIO_PUPDR_PUPD0 << (USART1_RX_PIN * GPIO_PUPDR_PUPD1_Pos),
-        0U << (USART1_RX_PIN * GPIO_PUPDR_PUPD1_Pos)); // PUSHPULL
+    // configure the IO Output Type
+    tmp = GPIOA->OTYPER;
+    tmp &= ~(GPIO_OTYPER_OT0 << USART2_TX_PIN) ;
+    GPIOA->OTYPER = tmp;
 
-    MODIFY_REG(GPIOA->AFR[1],
-        GPIO_AFRH_AFSEL8 << ((USART1_TX_PIN - 8U) * GPIO_AFRH_AFSEL9_Pos),
-        7U << ((USART1_TX_PIN - 8U) * GPIO_AFRH_AFSEL9_Pos)); // AF_7
-    MODIFY_REG(GPIOA->AFR[1],
-        GPIO_AFRH_AFSEL8 << ((USART1_RX_PIN - 8U) * GPIO_AFRH_AFSEL9_Pos),
-        7U << ((USART1_RX_PIN - 8U) * GPIO_AFRH_AFSEL9_Pos)); // AF_7
+    // activate the Pull-up or Pull down resistor for the current IO
+    tmp = GPIOA->PUPDR;
+    tmp &= ~(GPIO_PUPDR_PUPD0 << (USART2_TX_PIN * GPIO_PUPDR_PUPD1_Pos));
+    tmp |= (1U << (USART2_TX_PIN * GPIO_PUPDR_PUPD1_Pos));
+    GPIOA->PUPDR = tmp;
 
-    MODIFY_REG(GPIOA->MODER,
-        GPIO_MODER_MODE0 << (USART1_TX_PIN * GPIO_MODER_MODE1_Pos),
-        2U << (USART1_TX_PIN * GPIO_MODER_MODE1_Pos)); // MODE_2
-    MODIFY_REG(GPIOA->MODER,
-        GPIO_MODER_MODE0 << (USART1_RX_PIN * GPIO_MODER_MODE1_Pos),
-        2U << (USART1_RX_PIN * GPIO_MODER_MODE1_Pos)); // MODE_2
+    // configure GPIOA to USART2_RX ...........................................
 
-    // configure USART1..............................................
-    MODIFY_REG(USART1->CR1,
+    // configure alternate function
+    tmp = GPIOA->AFR[USART2_RX_PIN >> 3U];
+    tmp &= ~(0xFU << ((USART2_RX_PIN & 0x07U) * GPIO_AFRL_AFSEL1_Pos));
+    tmp |= (7U << ((USART2_RX_PIN & 0x7U) * GPIO_AFRL_AFSEL1_Pos));
+    GPIOA->AFR[USART2_RX_PIN >> 3U] = tmp;
+
+    // configure IO Direction mode (Input, Output, Alternate or Analog)
+    tmp = GPIOA->MODER;
+    tmp &= ~(GPIO_MODER_MODE0 << (USART2_RX_PIN * GPIO_MODER_MODE1_Pos));
+    tmp |= (2U << (USART2_RX_PIN * GPIO_MODER_MODE1_Pos));
+    GPIOA->MODER = tmp;
+
+    // configure the IO Speed
+    tmp = GPIOA->OSPEEDR;
+    tmp &= ~(GPIO_OSPEEDR_OSPEED0 << (USART2_RX_PIN * GPIO_OSPEEDR_OSPEED1_Pos));
+    tmp |= (2U << (USART2_RX_PIN * GPIO_OSPEEDR_OSPEED1_Pos));
+    GPIOA->OSPEEDR = tmp;
+
+    // configure the IO Output Type
+    tmp = GPIOA->OTYPER;
+    tmp &= ~(GPIO_OTYPER_OT0 << USART2_RX_PIN) ;
+    GPIOA->OTYPER = tmp;
+
+    // activate the Pull-up or Pull down resistor for the current IO
+    tmp = GPIOA->PUPDR;
+    tmp &= ~(GPIO_PUPDR_PUPD0 << (USART2_RX_PIN * GPIO_PUPDR_PUPD1_Pos));
+    tmp |= (1U << (USART2_RX_PIN * GPIO_PUPDR_PUPD1_Pos));
+    GPIOA->PUPDR = tmp;
+
+
+    // configure USART2..............................................
+    MODIFY_REG(USART2->CR1,
         (USART_CR1_M | USART_CR1_PCE | USART_CR1_PS |
-            USART_CR1_TE | USART_CR1_RE | USART_CR1_OVER8),
-        0U | // data==8bits
-        0U | // parity==none
+         USART_CR1_TE | USART_CR1_RE | USART_CR1_OVER8),
+        0U  | // data==8bits
+        0U  | // parity==none
         12U | // direction==TX & RX
         0U);  // oversampling==16
-    MODIFY_REG(USART1->CR2,
+    MODIFY_REG(USART2->CR2,
         USART_CR2_STOP,
         0U);  // stop-bits==1
-    MODIFY_REG(USART1->CR3,
+    MODIFY_REG(USART2->CR3,
         USART_CR3_RTSE | USART_CR3_CTSE,
         0U);  // hardware-flow=NO
 
     // baud rate
     SystemCoreClockUpdate();
-    USART1->BRR = QS_UART_DIV_SAMPLING16(
-        SystemCoreClock, // USART1 clock
+    USART2->BRR = QS_UART_DIV_SAMPLING16(
+        SystemCoreClock, // USART2 clock
         115200U,         // baud rate
         0U);             // prescaler
 
-    MODIFY_REG(USART1->PRESC,
+    MODIFY_REG(USART2->PRESC,
         USART_PRESC_PRESCALER,
         0U); // prescaler=DIV1
 
     // FIFO thresholds
-    MODIFY_REG(USART1->CR3,
+    MODIFY_REG(USART2->CR3,
         USART_CR3_TXFTCFG,
         0U << USART_CR3_TXFTCFG_Pos); // TX-FIFO=threshold-1
-    MODIFY_REG(USART1->CR3,
+    MODIFY_REG(USART2->CR3,
         USART_CR3_RXFTCFG,
         0U << USART_CR3_RXFTCFG_Pos); // RX-FIFO=threshold-1
 
-    SET_BIT(USART1->CR1, USART_CR1_FIFOEN);  // enable FIFO
+    SET_BIT(USART2->CR1, USART_CR1_FIFOEN);  // enable FIFO
 
     // asynch mode
-    CLEAR_BIT(USART1->CR2, USART_CR2_LINEN | USART_CR2_CLKEN);
-    CLEAR_BIT(USART1->CR3, USART_CR3_SCEN | USART_CR3_IREN | USART_CR3_HDSEL);
+    CLEAR_BIT(USART2->CR2, USART_CR2_LINEN | USART_CR2_CLKEN);
+    CLEAR_BIT(USART2->CR3, USART_CR3_SCEN | USART_CR3_IREN | USART_CR3_HDSEL);
 
     // RXNE and RX FIFO Not Empty Interrupt Enable
-    SET_BIT(USART1->CR1, USART_CR1_RXNEIE_Msk);
+    SET_BIT(USART2->CR1, USART_CR1_RXNEIE_Msk);
 
-    SET_BIT(USART1->CR1, USART_CR1_UE); // enable USART
+    SET_BIT(USART2->CR1, USART_CR1_UE); // enable USART
+
     // enable the UART RX interrupt...
-    NVIC_EnableIRQ(USART1_IRQn); // interrupt used for QS-RX
+    NVIC_EnableIRQ(USART2_IRQn); // interrupt used for QS-RX
 
-    return 1U; // success
+    return 1U; // return success
 }
 //............................................................................
 void QS_onCleanup(void) {
     // wait as long as the UART is busy
-    while ((USART1->ISR & USART_ISR_TXE_Msk) == 0U) { // TXE not empty
+    while ((USART2->ISR & USART_ISR_TXE_Msk) == 0U) { // TXE not empty
     }
     // delay before returning to allow all produced QS bytes to be received
     for (uint32_t volatile dly_ctr = 10000U; dly_ctr > 0U; --dly_ctr) {
@@ -240,9 +312,9 @@ void QS_onFlush(void) {
     for (;;) {
         uint16_t const b = QS_getByte();
         if (b != QS_EOD) {
-            while ((USART1->ISR & USART_ISR_TXE_Msk) == 0U) { // TXE not empty
+            while ((USART2->ISR & USART_ISR_TXE_Msk) == 0U) { // TXE not empty
             }
-            USART1->TDR = b;
+            USART2->TDR = b;
         }
         else {
             break;
@@ -259,10 +331,10 @@ void QS_onReset(void) {
 void QS_doOutput(void) {
     GPIOA->BSRR = (1U << LD2_PIN); // turn LD2 on
     // while Transmit Data Register Empty or TX-FIFO Not Full
-    while ((USART1->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {
+    while ((USART2->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {
         uint16_t const b = QS_getByte();
         if (b != QS_EOD) {   // not End-Of-Data?
-            USART1->TDR = b; // put into the DR register
+            USART2->TDR = b; // put into the DR register
         }
         else {
             break; // done for now
@@ -274,13 +346,13 @@ void QS_doOutput(void) {
 void QS_onTestLoop() {
     QS_tstPriv_.inTestLoop = true;
     while (QS_tstPriv_.inTestLoop) {
-        QS_rxParse();  // parse all the received bytes
+        QS_rxParse();  // parse all received bytes
 
         // while Transmit Data Register Empty or TX-FIFO Not Full
-        while ((USART1->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {
+        while ((USART2->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {
             uint16_t const b = QS_getByte();
             if (b != QS_EOD) {   // not End-Of-Data?
-                USART1->TDR = b; // put into the DR register
+                USART2->TDR = b; // put into the DR register
             }
             else {
                 break; // done for now

@@ -1,30 +1,29 @@
 //============================================================================
-// Product: QUTEST port for the EFM32-SLSTK3401A board
+// QUTEST port for the EFM32-SLSTK3401A (Pearl Gecko) board
+//
+// Copyright (C) 2005 Quantum Leaps, LLC. All rights reserved.
 //
 //                    Q u a n t u m  L e a P s
 //                    ------------------------
 //                    Modern Embedded Software
 //
-// Copyright (C) 2005 Quantum Leaps, LLC. <state-machine.com>
-//
 // SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-QL-commercial
 //
-// This software is dual-licensed under the terms of the open source GNU
-// General Public License version 3 (or any later version), or alternatively,
-// under the terms of one of the closed source Quantum Leaps commercial
-// licenses.
-//
-// The terms of the open source GNU General Public License version 3
-// can be found at: <www.gnu.org/licenses/gpl-3.0>
-//
-// The terms of the closed source Quantum Leaps commercial licenses
-// can be found at: <www.state-machine.com/licensing>
+// This software is dual-licensed under the terms of the open-source GNU
+// General Public License (GPL) or under the terms of one of the closed-
+// source Quantum Leaps commercial licenses.
 //
 // Redistributions in source code must retain this top-level comment block.
 // Plagiarizing this software to sidestep the license obligations is illegal.
 //
-// Contact information:
-// <www.state-machine.com>
+// NOTE:
+// The GPL does NOT permit the incorporation of this code into proprietary
+// programs. Please contact Quantum Leaps for commercial licensing options,
+// which expressly supersede the GPL and are designed explicitly for
+// closed-source distribution.
+//
+// Quantum Leaps contact information:
+// <www.state-machine.com/licensing>
 // <info@state-machine.com>
 //============================================================================
 #ifndef Q_SPY
@@ -86,6 +85,8 @@ void assert_failed(char const * const module, int_t const id) {
 uint8_t QS_onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
+    SystemCoreClockUpdate();
+
     static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
     QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
 
@@ -95,6 +96,16 @@ uint8_t QS_onStartup(void const *arg) {
     // Enable peripheral clocks
     CMU_ClockEnable(cmuClock_HFPER, true);
     CMU_ClockEnable(cmuClock_GPIO, true);
+
+    // configure the LEDs
+    GPIO_PinModeSet(LED_PORT, LED0_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(LED_PORT, LED1_PIN, gpioModePushPull, 0);
+    GPIO_PinOutClear(LED_PORT, LED0_PIN);
+    GPIO_PinOutClear(LED_PORT, LED1_PIN);
+
+    // configure the Buttons
+    GPIO_PinModeSet(PB_PORT, PB0_PIN, gpioModeInputPull, 1);
+    GPIO_PinModeSet(PB_PORT, PB1_PIN, gpioModeInputPull, 1);
 
     // To avoid false start, configure output as high
     GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 1); // TX pin
@@ -162,17 +173,19 @@ void QS_onCleanup(void) {
 // No critical section in QS_onFlush() to avoid nesting of critical sections
 // in case QS_onFlush() is called from Q_onError().
 void QS_onFlush(void) {
+    GPIO->P[LED_PORT].DOUT |=  (1U << LED1_PIN);
     for (;;) {
-        uint16_t b = QS_getByte();
+        uint16_t const b = QS_getByte();
         if (b != QS_EOD) {
             while ((l_USART0->STATUS & USART_STATUS_TXBL) == 0U) {
             }
-            l_USART0->TXDATA = (uint8_t)b;
+            l_USART0->TXDATA = b;
         }
         else {
             break;
         }
     }
+    GPIO->P[LED_PORT].DOUT &= ~(1U << LED1_PIN);
 }
 //............................................................................
 // callback function to reset the target (to be implemented in the BSP)
@@ -181,26 +194,43 @@ void QS_onReset(void) {
 }
 //............................................................................
 void QS_doOutput(void) {
+    GPIO->P[LED_PORT].DOUT |=  (1U << LED1_PIN);
     if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0U) {  // is TXE empty?
-        uint16_t b = QS_getByte();
+        uint16_t b const = QS_getByte();
 
         if (b != QS_EOD) {  // not End-Of-Data?
             l_USART0->TXDATA = b;
         }
     }
+    GPIO->P[LED_PORT].DOUT &= ~(1U << LED1_PIN);
 }
 //............................................................................
 void QS_onTestLoop() {
     QS_tstPriv_.inTestLoop = true;
     while (QS_tstPriv_.inTestLoop) {
-
-        QS_rxParse();  // parse all the received bytes
+        QS_rxParse();  // parse all received bytes
 
         if ((l_USART0->STATUS & USART_STATUS_TXBL) != 0U) { // is TXE empty?
-            uint16_t b = QS_getByte();
+            uint16_t const b = QS_getByte();
             if (b != QS_EOD) {  // not End-Of-Data?
                 l_USART0->TXDATA = b;
             }
+        }
+
+        // blink LD2 as "heartbeat"
+        static uint32_t ctr = 1U;
+        static enum { OFF, ON } state = OFF;
+        if (--ctr == 0U) {
+            if (state == OFF) {
+                GPIO->P[LED_PORT].DOUT |=  (1U << LED1_PIN);
+                ctr = 10000U;
+                state = ON;
+            }
+            else {
+                GPIO->P[LED_PORT].DOUT &= ~(1U << LED1_PIN);
+                ctr = 80000U;
+                state = OFF;
+           }
         }
     }
     // set inTestLoop to true in case calls to QS_onTestLoop() nest,

@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Linker script for STM32F401RE, GNU-ARM linker
 *
-* Copyright (C) 2005 Quantum Leaps, LLC. All rights reserved.
+* Copyright (C) 2005 Quantum Leaps, LLC <state-machine.com>.
 *
 *                    Q u a n t u m  L e a P s
 *                    ------------------------
@@ -153,9 +153,9 @@ SECTIONS {
         *(.bss*)
         *(COMMON)
 
-       . = ALIGN(4);
-       __bss_end__ = .;    /* define a global symbol at bss end */
-       _ebss = __bss_end__;
+        . = ALIGN(4);
+        __bss_end__ = .;    /* define a global symbol at bss end */
+        _ebss = __bss_end__;
     } >RAM
 
     .heap : {
