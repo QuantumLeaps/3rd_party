@@ -86,7 +86,7 @@ void CRYOTIMER_IRQHandler  (void) __attribute__ ((weak, alias("Default_Handler")
 void FPUEH_IRQHandler      (void) __attribute__ ((weak, alias("Default_Handler")));
 
 /*..........................................................................*/
-__attribute__ ((section(".isr_vector")))
+__attribute__ ((used, section(".isr_vector")))
 int const g_pfnVectors[] = {
     /* Initial Vector Table before relocation */
     (int)&__stack_end__,                // Top of Stack

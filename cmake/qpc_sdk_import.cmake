@@ -29,7 +29,7 @@ if(QPC_FETCH_FROM_GIT AND (NOT QPC_URL))
     message(STATUS "using QPC_URL ('${QPC_URL}') since not specified")
 endif()
 
-set(QPC_URL "${QPC_URL}" CACHE PATH "URL to retrieve the QPC SDK from git")
+set(QPC_URL "${QPC_URL}" CACHE STRING "URL to retrieve the QPC SDK from git")
 set(QPC_FETCH_FROM_GIT "${QPC_FETCH_FROM_GIT}" CACHE BOOL "Set to ON to fetch copy of SDK from git if not otherwise locatable")
 set(QPC_FETCH_FROM_GIT_PATH "${QPC_FETCH_FROM_GIT_PATH}" CACHE FILEPATH "location to download SDK")
 

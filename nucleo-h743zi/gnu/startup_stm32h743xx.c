@@ -213,7 +213,7 @@ void Reserved147_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler")
 void Reserved148_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler")));
 
 /*..........................................................................*/
-__attribute__ ((section(".isr_vector")))
+__attribute__ ((used, section(".isr_vector")))
 int const g_pfnVectors[] = {
     (int)&__stack_end__,                // Top of Stack
     (int)&Reset_Handler,                // Reset Handler

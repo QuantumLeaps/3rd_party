@@ -170,7 +170,7 @@ void PWM1Gen3_IRQHandler   (void) __attribute__ ((weak, alias("Default_Handler")
 void PWM1Fault_IRQHandler  (void) __attribute__ ((weak, alias("Default_Handler")));
 
 /*..........................................................................*/
-__attribute__ ((section(".isr_vector")))
+__attribute__ ((used, section(".isr_vector")))
 int const g_pfnVectors[] = {
     /* Initial Vector Table before relocation */
     (int)&__stack_end__,                // Top of Stack
