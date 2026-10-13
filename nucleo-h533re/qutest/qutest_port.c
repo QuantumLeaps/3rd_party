@@ -152,7 +152,7 @@ uint8_t QS_onStartup(void const *arg) {
 
     SystemClock_Config(); // configure the CPU clock
 
-    static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    static uint8_t qsTxBuf[4*1024]; // buffer for QS-TX channel
     QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel

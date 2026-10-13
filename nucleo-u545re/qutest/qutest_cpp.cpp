@@ -108,7 +108,7 @@ bool QS::onStartup(void const *arg) {
 
     SystemCoreClockUpdate();
 
-    static std::uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    static std::uint8_t qsTxBuf[4*1024]; // buffer for QS-TX channel
     initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static std::uint8_t qsRxBuf[256];    // buffer for QS-RX channel
@@ -280,7 +280,7 @@ void QS::doOutput(void) {
 void QS::onTestLoop() {
     tstPriv_.inTestLoop = true;
     while (tstPriv_.inTestLoop) {
-        rxParse();  // parse all the received bytes
+        rxParse();  // parse all received bytes
 
         // while Transmit Data Register Empty or TX-FIFO Not Full
         while ((USART1->ISR & USART_ISR_TXE_TXFNF_Msk) != 0U) {

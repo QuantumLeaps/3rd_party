@@ -92,7 +92,7 @@ void assert_failed(char const * const module, int_t const id) {
 bool QS::onStartup(void const *arg) {
     Q_UNUSED_PAR(arg);
 
-    static uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    static uint8_t qsTxBuf[4*1024]; // buffer for QS-TX channel
     initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static uint8_t qsRxBuf[256];    // buffer for QS-RX channel
