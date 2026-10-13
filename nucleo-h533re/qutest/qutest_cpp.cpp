@@ -158,7 +158,7 @@ bool QS::onStartup(void const *arg) {
 
     SystemClock_Config(); // configure the CPU clock
 
-    static std::uint8_t qsTxBuf[2*1024]; // buffer for QS-TX channel
+    static std::uint8_t qsTxBuf[4*1024]; // buffer for QS-TX channel
     initBuf(qsTxBuf, sizeof(qsTxBuf));
 
     static std::uint8_t qsRxBuf[256];    // buffer for QS-RX channel
